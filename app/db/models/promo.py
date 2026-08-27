@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -21,6 +21,8 @@ class PromoCode(Base, TimestampMixin):
     used_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    audience: Mapped[str] = mapped_column(String(32), default="all", nullable=False)
+    per_user_limit: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_by_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
@@ -30,9 +32,6 @@ class PromoCode(Base, TimestampMixin):
 
 class PromoRedemption(Base, TimestampMixin):
     __tablename__ = "promo_redemptions"
-    __table_args__ = (
-        UniqueConstraint("promo_code_id", "user_id", name="uq_promo_redemption_user"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     promo_code_id: Mapped[int] = mapped_column(

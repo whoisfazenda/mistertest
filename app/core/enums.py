@@ -7,10 +7,15 @@ from enum import StrEnum
 class UserRole(StrEnum):
     USER = "user"
     ADMIN = "admin"
+    OWNER = "owner"
+    SUPPORT = "support"
+    FINANCE = "finance"
+    MARKETING = "marketing"
 
 
 class OrderType(StrEnum):
     NEW_SUBSCRIPTION = "new_subscription"
+    GIFT = "gift"
     RENEW = "renew"
     RENEW_CUSTOM = "renew_custom"
     UPGRADE = "upgrade"

@@ -22,6 +22,21 @@ class UserRepository(BaseRepository):
         )
         return res.scalar_one_or_none()
 
+    async def get_by_username(self, username: str) -> User | None:
+        clean = username.strip().lstrip("@").lower()
+        if not clean:
+            return None
+        res = await self.session.execute(
+            select(User).where(func.lower(User.username) == clean)
+        )
+        return res.scalar_one_or_none()
+
+    async def count_referrals(self, referrer_id: int) -> int:
+        res = await self.session.execute(
+            select(func.count()).select_from(User).where(User.referrer_id == referrer_id)
+        )
+        return int(res.scalar_one())
+
     async def get_or_create(
         self,
         telegram_id: int,

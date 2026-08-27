@@ -35,6 +35,7 @@ from app.core.enums import OrderStatus, OrderType, PaymentStatus
 from app.core.logging import get_logger
 from app.db.models.order import Order
 from app.db.models.subscription import VPNSubscription
+from app.db.models.user import User
 from app.repositories.orders import OrderRepository
 from app.repositories.plans import PlanRepository
 from app.repositories.subscriptions import SubscriptionRepository
@@ -114,6 +115,27 @@ class OrderService:
             idempotency_key=new_idempotency_key(),
         )
         self.orders.add(order)
+        await self.session.commit()
+        return order
+
+    async def create_gift_order(
+        self,
+        payer_user_id: int,
+        recipient: User,
+        plan_uuid: str,
+    ) -> Order:
+        order = await self.create_new_subscription_order(payer_user_id, plan_uuid)
+        snapshot = dict(order.snapshot or {})
+        snapshot.update(
+            {
+                "gift": True,
+                "recipient_user_id": recipient.id,
+                "recipient_telegram_id": recipient.telegram_id,
+                "recipient_name": recipient.first_name or recipient.username or str(recipient.telegram_id),
+            }
+        )
+        order.order_type = OrderType.GIFT
+        order.snapshot = snapshot
         await self.session.commit()
         return order
 
@@ -333,12 +355,14 @@ class OrderService:
             logger.warning("Provisioning failed for order %s: %s", order.order_uuid, exc)
             return ProvisionOutcome(order, provisioned=False, error=str(exc))
 
+        if outcome.provisioned:
+            await self._apply_referral_reward(order)
         await self.session.commit()
         return outcome
 
     async def _dispatch_provision(self, order: Order) -> ProvisionOutcome:
         await self.client.start()
-        if order.order_type == OrderType.NEW_SUBSCRIPTION:
+        if order.order_type in (OrderType.NEW_SUBSCRIPTION, OrderType.GIFT):
             return await self._provision_new(order)
         if order.order_type == OrderType.RENEW:
             data = await self.client.renew_subscription(order.subscription_uuid)
@@ -360,7 +384,10 @@ class OrderService:
         raise ValueError(f"Unknown order type {order.order_type}")
 
     async def _provision_new(self, order: Order) -> ProvisionOutcome:
-        user = order.user
+        recipient_id = int(order.snapshot.get("recipient_user_id") or order.user_id)
+        user = order.user if recipient_id == order.user_id else await self.session.get(User, recipient_id)
+        if user is None:
+            raise ValueError("Получатель подарка не найден")
         external_user_id = str(user.telegram_id)
         plan_uuid = str(order.snapshot["plan_uuid"])
         data = await self.client.create_subscription(
@@ -379,7 +406,7 @@ class OrderService:
 
         sub = await self.subs.get_by_uuid(sub_uuid)
         if sub is None:
-            sub = VPNSubscription(subscription_uuid=sub_uuid, user_id=order.user_id)
+            sub = VPNSubscription(subscription_uuid=sub_uuid, user_id=user.id)
             self.subs.add(sub)
         sub_service = SubscriptionService(self.session, self.client)
         sub_service.apply_status_payload(sub, data)
@@ -394,6 +421,22 @@ class OrderService:
 
         await self.orders.mark_completed(order, sub.subscription_uuid)
         return ProvisionOutcome(order, provisioned=True, subscription=sub)
+
+    async def _apply_referral_reward(self, order: Order) -> None:
+        if order.order_type == OrderType.BALANCE_TOPUP or Decimal(str(order.amount or 0)) <= 0:
+            return
+        buyer = order.user
+        if not buyer.referrer_id or buyer.referral_rewarded:
+            return
+        referrer = await self.session.get(User, buyer.referrer_id)
+        if referrer is None or referrer.id == buyer.id:
+            buyer.referral_rewarded = True
+            return
+        bonus = Decimal(str(settings.referral_bonus))
+        referrer.balance = Decimal(str(referrer.balance or 0)) + bonus
+        referrer.referral_earned = Decimal(str(referrer.referral_earned or 0)) + bonus
+        referrer.balance_currency = settings.currency
+        buyer.referral_rewarded = True
 
     async def _apply_to_existing(self, order: Order, data: dict[str, Any]) -> ProvisionOutcome:
         sub = await self.subs.get_by_uuid(order.subscription_uuid)

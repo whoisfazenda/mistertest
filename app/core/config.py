@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     bot_token: str = Field(default="", alias="BOT_TOKEN")
     miniapp_bot_token: str = Field(default="", alias="MINIAPP_BOT_TOKEN")
     miniapp_url: str = Field(default="", alias="MINIAPP_URL")
+    bot_username: str = Field(default="misterfvpn_bot", alias="BOT_USERNAME")
     # Comma-separated env value; parsed lists are exposed via properties below.
     admin_ids_raw: str = Field(default="", alias="ADMIN_IDS")
 
@@ -54,6 +55,7 @@ class Settings(BaseSettings):
     plan_markup_percent: Decimal = Field(default=Decimal("30"), alias="PLAN_MARKUP_PERCENT")
     min_balance_topup: Decimal = Field(default=Decimal("100"), alias="MIN_BALANCE_TOPUP")
     max_balance_topup: Decimal = Field(default=Decimal("50000"), alias="MAX_BALANCE_TOPUP")
+    referral_bonus: Decimal = Field(default=Decimal("100"), alias="REFERRAL_BONUS")
     required_channel_id: str = Field(default="", alias="REQUIRED_CHANNEL_ID")
     required_channel_url: str = Field(default="", alias="REQUIRED_CHANNEL_URL")
     free_trial_plan_uuid: str = Field(default="", alias="FREE_TRIAL_PLAN_UUID")

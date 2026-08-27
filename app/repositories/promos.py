@@ -1,14 +1,15 @@
 """Promo code repository."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import settings
 from app.db.models.promo import PromoCode, PromoRedemption
+from app.db.models.subscription import VPNSubscription
 from app.db.models.user import User
 from app.repositories.base import BaseRepository
 
@@ -22,6 +23,8 @@ class PromoRepository(BaseRepository):
         max_uses: int | None,
         expires_at: datetime | None,
         created_by_user_id: int | None,
+        audience: str = "all",
+        per_user_limit: int = 1,
     ) -> PromoCode:
         promo = PromoCode(
             code=code.upper(),
@@ -30,6 +33,8 @@ class PromoRepository(BaseRepository):
             max_uses=max_uses,
             expires_at=expires_at,
             created_by_user_id=created_by_user_id,
+            audience=audience,
+            per_user_limit=per_user_limit,
         )
         self.session.add(promo)
         await self.session.flush()
@@ -58,12 +63,16 @@ class PromoRepository(BaseRepository):
         return int(res.scalar_one())
 
     async def has_redeemed(self, promo_id: int, user_id: int) -> bool:
+        return await self.redemption_count(promo_id, user_id) > 0
+
+    async def redemption_count(self, promo_id: int, user_id: int) -> int:
         res = await self.session.execute(
-            select(PromoRedemption.id)
+            select(func.count())
+            .select_from(PromoRedemption)
             .where(PromoRedemption.promo_code_id == promo_id)
             .where(PromoRedemption.user_id == user_id)
         )
-        return res.scalar_one_or_none() is not None
+        return int(res.scalar_one())
 
     async def redeem(self, promo: PromoCode, user: User) -> tuple[bool, str]:
         now = datetime.now(timezone.utc)
@@ -73,7 +82,9 @@ class PromoRepository(BaseRepository):
             return False, "Срок действия промокода закончился."
         if promo.max_uses is not None and promo.used_count >= promo.max_uses:
             return False, "Лимит использований промокода закончился."
-        if await self.has_redeemed(promo.id, user.id):
+        if not await self._audience_matches(promo, user):
+            return False, "Промокод недоступен для этого аккаунта."
+        if await self.redemption_count(promo.id, user.id) >= promo.per_user_limit:
             return False, "Вы уже активировали этот промокод."
 
         amount = Decimal(str(promo.amount))
@@ -93,6 +104,30 @@ class PromoRepository(BaseRepository):
             await self.session.rollback()
             return False, "Вы уже активировали этот промокод."
         return True, ""
+
+    async def _audience_matches(self, promo: PromoCode, user: User) -> bool:
+        audience = promo.audience or "all"
+        if audience == "all":
+            return True
+        now = datetime.now(timezone.utc)
+        active_result = await self.session.execute(
+            select(VPNSubscription.id)
+            .where(VPNSubscription.user_id == user.id)
+            .where(VPNSubscription.is_active.is_(True))
+            .where(or_(VPNSubscription.expires_at.is_(None), VPNSubscription.expires_at > now))
+            .limit(1)
+        )
+        has_active = active_result.scalar_one_or_none() is not None
+        if audience == "active":
+            return has_active
+        if audience == "no_subscription":
+            return not has_active
+        if audience == "new_users":
+            created_at = user.created_at
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            return created_at >= now - timedelta(days=7)
+        return False
 
 
 def _aware_utc(value: datetime) -> datetime:

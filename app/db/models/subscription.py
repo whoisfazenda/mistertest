@@ -47,6 +47,9 @@ class VPNSubscription(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_frozen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_trial: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    auto_renew_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
     frozen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
