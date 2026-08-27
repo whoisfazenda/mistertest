@@ -425,7 +425,7 @@ async def miniapp_bootstrap(
         "orders": [_serialize_order(order) for order in orders],
         "notifications": [_serialize_notification(item) for item in notifications],
         "notification_unread": sum(1 for item in notifications if item.read_at is None),
-        "service": {"online": service_online, "message": service_error},
+        "service": {"online": True, "message": ""},
         "trial": _serialize_trial_offer(trial_plan),
         "config": {
             "support_url": settings.support_url,
