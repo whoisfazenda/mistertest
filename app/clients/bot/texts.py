@@ -1,0 +1,183 @@
+"""Centralized Russian UI texts and small builders.
+
+All user-facing text lives here. Dynamic values are HTML-escaped at call sites
+via app.utils.formatting.escape.
+"""
+from __future__ import annotations
+
+from app.db.models.plan import VPNPlanSnapshot
+from app.db.models.subscription import VPNSubscription
+from app.bot.premium_emoji import pe
+from app.utils.formatting import (
+    escape,
+    format_date,
+    format_days,
+    format_gb_used,
+    format_price,
+    format_traffic,
+)
+
+WELCOME = (
+    f"{pe('sparkles')} <b>Добро пожаловать в VPN-сервис!</b>\n\n"
+    "Быстрый и надёжный доступ к интернету без ограничений.\n"
+    "Выберите действие в меню ниже."
+)
+
+MENU = f"{pe('shield')} <b>Главное меню</b>\n\nЧем можем помочь?"
+
+HELP = (
+    f"{pe('info')} <b>Помощь и информация</b>\n\n"
+    "Здесь собраны все документы и способы связи с поддержкой Mister VPN.\n\n"
+    f"{pe('news')} Новостной канал: <b>@mistervpn_news</b>\n\n"
+    '<a href="https://telegra.ph/Publichnaya-oferta-Mister-VPN-07-01">Публичная оферта</a>\n'
+    '<a href="https://telegra.ph/Politika-konfidencialnosti-Mister-VPN-07-01">Политика конфиденциальности</a>'
+)
+
+CONNECT_GUIDE = (
+    f"{pe('phone')} <b>Инструкция по подключению</b>\n\n"
+    "Выберите устройство, на котором хотите настроить Mister VPN."
+)
+
+SUPPORT = (
+    f"{pe('chat')} <b>Поддержка</b>\n\n"
+    "Возникли вопросы или сложности? Мы на связи и поможем."
+)
+
+NO_SUBSCRIPTION = (
+    f"{pe('shield')} <b>Мой VPN</b>\n\n"
+    "У вас пока нет активной подписки.\n"
+    "Оформите тариф, чтобы начать пользоваться VPN."
+)
+
+BUY_INTRO = f"{pe('buy')} <b>Выберите тариф</b>\n\nДоступные планы подписки:"
+BUY_EMPTY = (
+    f"{pe('buy')} <b>Тарифы временно недоступны</b>\n\n"
+    "Не удалось загрузить список тарифов. Попробуйте позже или напишите в поддержку."
+)
+
+ERROR_GENERIC = f"{pe('warning')} Что-то пошло не так. Попробуйте ещё раз чуть позже."
+ERROR_RATE_LIMIT = f"{pe('time')} Сервис сейчас перегружен. Пожалуйста, повторите через минуту."
+ERROR_NOT_FOUND = f"{pe('search')} Объект не найден. Обновите раздел и попробуйте снова."
+ERROR_BAD_STATE = f"{pe('forbidden')} Действие сейчас недоступно для вашей подписки."
+ERROR_PAYMENT_PENDING = f"{pe('time')} Оплата пока не поступила. Попробуйте проверить чуть позже."
+
+
+def plan_button_label(plan: VPNPlanSnapshot) -> str:
+    price = format_price(
+        float(plan.retail_price) if plan.retail_price is not None else None, plan.currency
+    )
+    parts = [escape(plan.name)]
+    if plan.max_devices:
+        parts.append(f"{plan.max_devices} устройств")
+    parts.append(price)
+    return f"{_plan_button_emoji(plan)} " + " · ".join(parts)
+
+
+def plan_card(plan: VPNPlanSnapshot) -> str:
+    price = format_price(
+        float(plan.retail_price) if plan.retail_price is not None else None, plan.currency
+    )
+    lines = [
+        f"{_emoji_tag(_plan_emoji_key(plan))} <b>{escape(plan.name)}</b>",
+        "",
+        f"{pe('balance')} Цена: <b>{price}</b>",
+    ]
+    if plan.duration_days:
+        lines.append(f"{pe('calendar')} Срок: {format_days(plan.duration_days)}")
+    if plan.max_devices:
+        lines.append(f"{pe('devices')} Устройств: до {plan.max_devices}")
+    lines.append(f"{pe('traffic')} Трафик: {format_traffic(plan.traffic_limit_bytes)}")
+    return "\n".join(lines)
+
+
+def _plan_button_emoji(plan: VPNPlanSnapshot) -> str:
+    key = _plan_emoji_key(plan)
+    return _emoji_fallback(key)
+
+
+def _plan_emoji_key(plan: VPNPlanSnapshot) -> str:
+    manual = getattr(plan, "button_emoji_key", None)
+    if manual:
+        return str(manual)
+    name = (plan.name or "").lower()
+    if "ultra" in name or "ультра" in name:
+        return "crown"
+    if "pro" in name or "про" in name:
+        return "diamond"
+    if "standard" in name or "стандарт" in name:
+        return "star"
+    return "subs"
+
+
+def _emoji_fallback(key: str) -> str:
+    from app.bot.premium_emoji import EMOJI_IDS
+
+    return EMOJI_IDS.get(key, EMOJI_IDS["subs"])[0]
+
+
+def _emoji_tag(key: str) -> str:
+    from app.bot.premium_emoji import EMOJI_IDS
+
+    fallback, emoji_id = EMOJI_IDS.get(key, EMOJI_IDS["subs"])
+    return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
+
+
+def order_summary(plan: VPNPlanSnapshot) -> str:
+    price = format_price(
+        float(plan.retail_price) if plan.retail_price is not None else None, plan.currency
+    )
+    lines = [
+        f"{pe('subs')} <b>Ваш заказ</b>",
+        "",
+        f"{pe('subs')} Тариф: <b>{escape(plan.name)}</b>",
+    ]
+    if plan.duration_days:
+        lines.append(f"{pe('calendar')} Срок: {format_days(plan.duration_days)}")
+    if plan.max_devices:
+        lines.append(f"{pe('devices')} Устройств: до {plan.max_devices}")
+    lines.append(f"{pe('traffic')} Трафик: {format_traffic(plan.traffic_limit_bytes)}")
+    lines.append("")
+    lines.append(f"{pe('card')} К оплате: <b>{price}</b>")
+    lines.append("")
+    lines.append("Нажмите «Перейти к оплате», затем «Проверить оплату».")
+    return "\n".join(lines)
+
+
+def _status_label(sub: VPNSubscription) -> str:
+    if sub.is_expired:
+        return f"{pe('inactive')} истекла"
+    if sub.is_frozen:
+        return f"{pe('frozen')} заморожена"
+    if sub.is_active:
+        return f"{pe('active')} активна"
+    return f"{pe('inactive')} неактивна"
+
+
+def subscription_card(sub: VPNSubscription, devices_used: int | None = None) -> str:
+    lines = [
+        f"{pe('shield')} <b>Ваша VPN-подписка</b>",
+        "",
+        f"{pe('subs')} Тариф: <b>{escape(sub.plan_name or '—')}</b>",
+        f"{pe('sparkles')} Статус: {_status_label(sub)}",
+        f"{pe('time')} Действует до: {format_date(sub.expires_at)}",
+    ]
+    if sub.max_devices:
+        used = devices_used if devices_used is not None else "?"
+        lines.append(f"{pe('devices')} Устройства: {used}/{sub.max_devices}")
+    if sub.is_unlimited_traffic:
+        lines.append(f"{pe('traffic')} Трафик: безлимитный")
+    else:
+        lines.append(
+            f"{pe('traffic')} Трафик: использовано "
+            + format_gb_used(sub.traffic_used_bytes, sub.traffic_limit_bytes)
+        )
+    return "\n".join(lines)
+
+
+def subscription_link(url: str) -> str:
+    return (
+        f"{pe('link')} <b>Ваша ссылка подписки</b>\n\n"
+        f"<code>{escape(url)}</code>\n\n"
+        "Скопируйте её и добавьте в VPN-клиент. "
+        "Инструкция — по кнопке ниже."
+    )

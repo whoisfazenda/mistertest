@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MisterVpnMobile.MainPage"
+             BackgroundColor="#000000"
+             Shell.NavBarIsVisible="False">
+    <ContentPage.Resources>
+        <Color x:Key="Black">#000000</Color>
+        <Color x:Key="Surface">#111111</Color>
+        <Color x:Key="SurfaceRaised">#1A1A1A</Color>
+        <Color x:Key="Border">#222222</Color>
+        <Color x:Key="BorderVisible">#333333</Color>
+        <Color x:Key="TextDisabled">#666666</Color>
+        <Color x:Key="TextSecondary">#999999</Color>
+        <Color x:Key="TextPrimary">#E8E8E8</Color>
+        <Color x:Key="TextDisplay">#FFFFFF</Color>
+        <Color x:Key="Accent">#FF3830</Color>
+        <Color x:Key="Success">#4A9E5C</Color>
+
+        <Style x:Key="LabelText" TargetType="Label">
+            <Setter Property="FontFamily" Value="monospace"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextColor" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="CharacterSpacing" Value="1.2"/>
+        </Style>
+
+        <Style x:Key="ValueText" TargetType="Label">
+            <Setter Property="FontFamily" Value="monospace"/>
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="TextColor" Value="{StaticResource TextDisplay}"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+        </Style>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Surface}"/>
+            <Setter Property="Stroke" Value="{StaticResource BorderVisible}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 8"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <Setter Property="BorderColor" Value="{StaticResource BorderVisible}"/>
+            <Setter Property="BorderWidth" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontFamily" Value="monospace"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="HeightRequest" Value="44"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid Padding="18,14,18,8" RowDefinitions="Auto,Auto,*">
+        <Grid RowDefinitions="Auto,Auto" Margin="0,10,0,16">
+            <Grid ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="DEVICE INFO"
+                           FontFamily="monospace"
+                           FontSize="28"
+                           CharacterSpacing="1.6"
+                           TextColor="{StaticResource TextDisplay}"/>
+                    <Label Text="MISTER VPN / ANDROID APK"
+                           Style="{StaticResource LabelText}"/>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="End">
+                    <Label Text="10:20"
+                           FontFamily="monospace"
+                           FontSize="16"
+                           TextColor="{StaticResource TextPrimary}"
+                           HorizontalTextAlignment="End"/>
+                    <Label Text="5G  WIFI  BAT"
+                           Style="{StaticResource LabelText}"
+                           HorizontalTextAlignment="End"/>
+                </VerticalStackLayout>
+            </Grid>
+            <BoxView Grid.Row="1"
+                     HeightRequest="1"
+                     Margin="0,16,0,0"
+                     Color="{StaticResource BorderVisible}"/>
+        </Grid>
+
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*,*" ColumnSpacing="4" RowSpacing="4" Margin="0,0,0,16">
+            <Button Text="# OVERVIEW" BorderColor="{StaticResource TextDisplay}"/>
+            <Button Grid.Column="1" Text="SERVER"/>
+            <Button Grid.Column="2" Text="SYSTEM"/>
+            <Button Grid.Column="3" Text="DISPLAY"/>
+            <Button Grid.Row="1" Text="TRAFFIC"/>
+            <Button Grid.Row="1" Grid.Column="1" Text="PROXY"/>
+            <Button Grid.Row="1" Grid.Column="2" Text="LOGS" Clicked="OnConfigClicked"/>
+            <Button Grid.Row="1" Grid.Column="3" Text="CONFIG" Clicked="OnConfigClicked"/>
+        </Grid>
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Spacing="10">
+                <Border Style="{StaticResource Card}" Padding="20">
+                    <Grid ColumnDefinitions="*,122">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="MISTER VPN"
+                                   Style="{StaticResource LabelText}"/>
+                            <Label x:Name="StatusLabel"
+                                   Text="OFFLINE"
+                                   FontFamily="monospace"
+                                   FontSize="44"
+                                   CharacterSpacing="1.2"
+                                   TextColor="{StaticResource TextDisplay}"/>
+                            <Label Text="PRIVATE TUNNEL / XRAY"
+                                   Style="{StaticResource LabelText}"/>
+                            <HorizontalStackLayout Spacing="8" Margin="0,16,0,0">
+                                <Ellipse WidthRequest="9"
+                                         HeightRequest="9"
+                                         Fill="{StaticResource Accent}"
+                                         VerticalOptions="Center"/>
+                                <Label Text="ONE TAP CONNECT"
+                                       Style="{StaticResource LabelText}"
+                                       TextColor="{StaticResource TextPrimary}"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <Grid Grid.Column="1" WidthRequest="122" HeightRequest="122">
+                            <Ellipse Stroke="{StaticResource BorderVisible}" StrokeThickness="1"/>
+                            <Ellipse Stroke="{StaticResource Border}" StrokeThickness="1" Margin="14"/>
+                            <Ellipse Stroke="{StaticResource TextDisabled}" StrokeThickness="1" Margin="29"/>
+                            <Button x:Name="ConnectButton"
+                                    Text="I/O"
+                                    WidthRequest="76"
+                                    HeightRequest="76"
+                                    CornerRadius="38"
+                                    BorderColor="{StaticResource TextPrimary}"
+                                    BackgroundColor="#050505"
+                                    Clicked="OnConnectClicked"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="SERVER" Style="{StaticResource LabelText}"/>
+                            <HorizontalStackLayout Spacing="10">
+                                <Grid WidthRequest="22" HeightRequest="22" VerticalOptions="Center">
+                                    <Ellipse Stroke="{StaticResource TextPrimary}" StrokeThickness="1" Fill="#050505"/>
+                                    <Ellipse WidthRequest="7" HeightRequest="7" Fill="{StaticResource Accent}" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Grid>
+                                <Label Text="GERMANY"
+                                       Style="{StaticResource ValueText}"
+                                       FontSize="20"/>
+                            </HorizontalStackLayout>
+                            <Label Text="AUTO SELECTED" Style="{StaticResource LabelText}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="LATENCY" Style="{StaticResource LabelText}"/>
+                            <HorizontalStackLayout Spacing="6">
+                                <Label x:Name="PingLabel" Text="--" Style="{StaticResource ValueText}" FontSize="30"/>
+                                <Label Text="MS" Style="{StaticResource LabelText}" VerticalOptions="End"/>
+                            </HorizontalStackLayout>
+                            <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*,*" ColumnSpacing="3" HeightRequest="8">
+                                <BoxView Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="1" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="2" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="3" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="4" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="5" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="6" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="7" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="8" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="9" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="10" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="11" Color="{StaticResource BorderVisible}"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="DOWNLOAD" Style="{StaticResource LabelText}"/>
+                            <Label Text="128" Style="{StaticResource ValueText}" FontSize="38"/>
+                            <Label Text="MB / SESSION" Style="{StaticResource LabelText}"/>
+                            <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*,*,*" ColumnSpacing="3" HeightRequest="8">
+                                <BoxView Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="1" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="2" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="3" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="4" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="5" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="6" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="7" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="8" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="9" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="10" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="11" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="12" Color="{StaticResource BorderVisible}"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="UPLOAD" Style="{StaticResource LabelText}"/>
+                            <Label Text="42" Style="{StaticResource ValueText}" FontSize="38"/>
+                            <Label Text="MB / SESSION" Style="{StaticResource LabelText}"/>
+                            <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*,*,*" ColumnSpacing="3" HeightRequest="8">
+                                <BoxView Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="1" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="2" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="3" Color="{StaticResource TextDisplay}"/>
+                                <BoxView Grid.Column="4" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="5" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="6" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="7" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="8" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="9" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="10" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="11" Color="{StaticResource BorderVisible}"/>
+                                <BoxView Grid.Column="12" Color="{StaticResource BorderVisible}"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="CONNECTION DETAILS" Style="{StaticResource LabelText}"/>
+                        <Grid RowDefinitions="34,34,34,34,34" ColumnDefinitions="34,*,Auto">
+                            <Label Text="#" Style="{StaticResource ValueText}" FontSize="20"/>
+                            <Label Grid.Column="1" Text="DEVICE CODE" Style="{StaticResource LabelText}" VerticalTextAlignment="Center"/>
+                            <Label Grid.Column="2" Text="MVPN-02" Style="{StaticResource LabelText}" TextColor="{StaticResource TextPrimary}" VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Row="1" Text="&lt;&gt;" Style="{StaticResource ValueText}" FontSize="18"/>
+                            <Label Grid.Row="1" Grid.Column="1" Text="PROTOCOL" Style="{StaticResource LabelText}" VerticalTextAlignment="Center"/>
+                            <Label Grid.Row="1" Grid.Column="2" Text="VLESS / XRAY" Style="{StaticResource LabelText}" TextColor="{StaticResource TextPrimary}" VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Row="2" Text="[]" Style="{StaticResource ValueText}" FontSize="18"/>
+                            <Label Grid.Row="2" Grid.Column="1" Text="SYSTEM PROXY" Style="{StaticResource LabelText}" VerticalTextAlignment="Center"/>
+                            <Label Grid.Row="2" Grid.Column="2" Text="ANDROID VPN" Style="{StaticResource LabelText}" TextColor="{StaticResource TextPrimary}" VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Row="3" Text="i" Style="{StaticResource ValueText}" FontSize="20"/>
+                            <Label Grid.Row="3" Grid.Column="1" Text="UPTIME" Style="{StaticResource LabelText}" VerticalTextAlignment="Center"/>
+                            <Label x:Name="UptimeLabel" Grid.Row="3" Grid.Column="2" Text="00H 00M 00S" Style="{StaticResource LabelText}" TextColor="{StaticResource TextPrimary}" VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Row="4" Text="*" Style="{StaticResource ValueText}" FontSize="20"/>
+                            <Label Grid.Row="4" Grid.Column="1" Text="STATE" Style="{StaticResource LabelText}" VerticalTextAlignment="Center"/>
+                            <Label x:Name="StateLabel" Grid.Row="4" Grid.Column="2" Text="READY" Style="{StaticResource LabelText}" TextColor="{StaticResource Success}" VerticalTextAlignment="Center"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="ConfigPanel"
+                        Style="{StaticResource Card}"
+                        IsVisible="False">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="CONFIG / LOG" Style="{StaticResource LabelText}"/>
+                        <Editor x:Name="SubscriptionEditor"
+                                Placeholder="PASTE SUBSCRIPTION URL"
+                                PlaceholderColor="{StaticResource TextDisabled}"
+                                TextColor="{StaticResource TextPrimary}"
+                                BackgroundColor="#050505"
+                                FontFamily="monospace"
+                                FontSize="12"
+                                HeightRequest="96"/>
+                        <Button Text="SAVE CONFIG" Clicked="OnSaveClicked" BorderColor="{StaticResource TextDisplay}"/>
+                        <Label x:Name="LogLabel"
+                               Text="[10:20:00] READY."
+                               Style="{StaticResource LabelText}"
+                               TextColor="{StaticResource TextPrimary}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto" Padding="0,10,0,4">
+                    <Label Text="BUILT FOR CLARITY. DESIGNED TO DISAPPEAR."
+                           Style="{StaticResource LabelText}"/>
+                    <Label Grid.Column="1"
+                           Text="v1.0"
+                           Style="{StaticResource LabelText}"/>
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

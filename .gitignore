@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+# Node
+node_modules/
+app/miniapp-react/node_modules/
+app/miniapp-react/dist/
+.vite/
+
+# Env / secrets
+.env
+*.env
+!.env.example
+.certbot/
+certs/
+*.pem
+*.key
+
+# Local databases / runtime state
+*.db
+*.sqlite
+*.sqlite3
+
+# Local SDK / package caches
+.dotnet/
+.dotnet-home/
+.nuget/
+
+# IDE
+.idea/
+.vscode/
+.claude/
+*.swp
+
+# Tests / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# Desktop client build outputs
+desktop_client/**/bin/
+desktop_client/**/obj/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local restore points created before large refactors
+backups/
