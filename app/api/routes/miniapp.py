@@ -406,29 +406,15 @@ async def miniapp_bootstrap(
     devices: list[dict[str, Any]] = []
     service_online = True
     sub_service = SubscriptionService(session, request.app.state.adaptgroup_client)
-    if sub is not None:
-        try:
-            sub = await asyncio.wait_for(sub_service.refresh_from_api(sub), timeout=1.8)
-            devices = await asyncio.wait_for(sub_service.get_devices(sub), timeout=1.8)
-        except Exception:
-            service_online = True
-
     plan_service = PlanService(session, request.app.state.adaptgroup_client)
     plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
     if not plans:
         try:
-            plans = await asyncio.wait_for(plan_service.get_purchasable_plans(auto_sync=True), timeout=2.5)
+            plans = await asyncio.wait_for(plan_service.get_purchasable_plans(auto_sync=True), timeout=2.0)
         except Exception:
             plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
     orders = await OrderRepository(session).list_for_user(user.id, limit=12)
     trial_plan = None if user.trial_claimed or sub is not None else await _find_trial_plan(session)
-    await _sync_user_notifications(
-        session,
-        user,
-        sub,
-        devices,
-        service_online=service_online,
-    )
     notifications = await _list_user_notifications(session, user.id, limit=20)
     await session.commit()
     return {
