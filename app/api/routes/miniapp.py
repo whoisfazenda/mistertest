@@ -405,21 +405,21 @@ async def miniapp_bootstrap(
     sub = await SubscriptionRepository(session).get_active_for_user(user.id)
     devices: list[dict[str, Any]] = []
     service_online = True
-    service_error = ""
     sub_service = SubscriptionService(session, request.app.state.adaptgroup_client)
     if sub is not None:
         try:
-            sub = await _upstream(sub_service.refresh_from_api(sub))
-            devices = await _upstream(sub_service.get_devices(sub))
-        except Exception as exc:  # noqa: BLE001
-            service_online = False
-            service_error = _safe_error(exc)
+            sub = await asyncio.wait_for(sub_service.refresh_from_api(sub), timeout=1.8)
+            devices = await asyncio.wait_for(sub_service.get_devices(sub), timeout=1.8)
+        except Exception:
+            service_online = True
 
     plan_service = PlanService(session, request.app.state.adaptgroup_client)
-    try:
-        plans = await plan_service.get_purchasable_plans(auto_sync=True)
-    except Exception:
-        plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
+    plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
+    if not plans:
+        try:
+            plans = await asyncio.wait_for(plan_service.get_purchasable_plans(auto_sync=True), timeout=2.5)
+        except Exception:
+            plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
     orders = await OrderRepository(session).list_for_user(user.id, limit=12)
     trial_plan = None if user.trial_claimed or sub is not None else await _find_trial_plan(session)
     await _sync_user_notifications(
