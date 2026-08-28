@@ -1,5 +1,4 @@
-import { Suspense, useEffect } from 'react';
-import { AnimatePresence, MotionConfig } from 'framer-motion';
+import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { BottomNav } from './components/BottomNav';
 import { TabFlowProvider, TabPager } from './components/TabFlow';
@@ -52,40 +51,34 @@ export default function App() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
-      <TabFlowProvider>
-        {/* Full-app atmospheric character mascot watermark background */}
-        <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden">
-          <img
-            src="/miniapp/static/mister-character.png"
-            alt=""
-            className="h-full max-h-[88vh] w-auto max-w-[95vw] object-contain opacity-[0.20] filter grayscale select-none"
-            loading="eager"
-          />
-        </div>
+    <TabFlowProvider>
+      {/* Background character watermark */}
+      <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden">
+        <img
+          src="/miniapp/static/mister-character.png"
+          alt=""
+          className="h-full max-h-[88vh] w-auto max-w-[95vw] object-contain opacity-[0.16] filter grayscale select-none"
+          loading="eager"
+        />
+      </div>
 
-        <div
-          className="relative z-10 mx-auto min-h-dvh max-w-md px-4 pt-safe pb-safe"
-          style={{ minHeight: '100dvh' }}
-        >
-          <Suspense fallback={<BootSkeleton />}>
-            {mainTab ? (
-              <TabPager pages={mainPages} />
-            ) : (
-              <AnimatePresence mode="wait" initial={false}>
-                <Routes location={location} key={location.pathname}>
-                  <Route path="/admin" element={<AdminScreen />} />
-                  <Route path="/history" element={<HistoryScreen />} />
-                  <Route path="/plan/:planId" element={<PlanDetailScreen />} />
-                  <Route path="/support" element={<SupportScreen />} />
-                </Routes>
-              </AnimatePresence>
-            )}
-          </Suspense>
-          <BottomNav />
-        </div>
-      </TabFlowProvider>
-    </MotionConfig>
+      <div
+        className="relative z-10 mx-auto min-h-dvh max-w-md px-4 pt-safe pb-safe"
+        style={{ minHeight: '100dvh' }}
+      >
+        {mainTab ? (
+          <TabPager pages={mainPages} />
+        ) : (
+          <Routes location={location} key={location.pathname}>
+            <Route path="/admin" element={<AdminScreen />} />
+            <Route path="/history" element={<HistoryScreen />} />
+            <Route path="/plan/:planId" element={<PlanDetailScreen />} />
+            <Route path="/support" element={<SupportScreen />} />
+          </Routes>
+        )}
+        <BottomNav />
+      </div>
+    </TabFlowProvider>
   );
 }
 
@@ -93,10 +86,10 @@ function BootSkeleton() {
   return (
     <Screen>
       <div className="space-y-4 pt-6">
-        <div className="mx-auto mb-6 h-[140px] w-[140px]">
+        <div className="mx-auto mb-6 h-[120px] w-[120px]">
           <div className="skeleton h-full w-full rounded-3xl" />
         </div>
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2].map((i) => (
           <SkeletonRow key={i} lines={1} />
         ))}
       </div>
@@ -108,9 +101,14 @@ function BootError({ message, onRetry }: { message: string; onRetry: () => void 
   return (
     <Screen>
       <div className="space-y-4 pt-16 text-center">
-        <h1 className="text-[22px] font-semibold text-white">Не удалось загрузить Mister VPN</h1>
-        <p className="text-[14px] text-txt2">{message}</p>
-        <GradientButton onClick={onRetry}>Повторить попытку</GradientButton>
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/10 text-3xl">
+          ⚠️
+        </div>
+        <h1 className="text-[20px] font-semibold text-white">Не удалось подключиться</h1>
+        <p className="text-[13px] text-txt2">{message}</p>
+        <div className="pt-2">
+          <GradientButton onClick={onRetry}>Повторить попытку</GradientButton>
+        </div>
       </div>
     </Screen>
   );
