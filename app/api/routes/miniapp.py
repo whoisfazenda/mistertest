@@ -582,7 +582,7 @@ async def purchase_plan(
         get_payment_provider(),
     )
     order = await service.create_new_subscription_order(user.id, plan.plan_uuid)
-    return await _start_order_payment(service, order, body.payment_method)
+    return await _start_order_payment(service, order, body.payment_method, request=request)
 
 
 @router.post("/miniapp/api/orders/gift")
@@ -615,7 +615,7 @@ async def purchase_gift(
         get_payment_provider(),
     )
     order = await service.create_gift_order(user.id, recipient, plan.plan_uuid)
-    return await _start_order_payment(service, order, body.payment_method)
+    return await _start_order_payment(service, order, body.payment_method, request=request)
 
 
 @router.post("/miniapp/api/orders/renew")
@@ -645,7 +645,7 @@ async def renew_subscription(
         currency=plan.currency,
         extra={"plan_uuid": plan.plan_uuid, "plan_name": plan.name},
     )
-    return await _start_order_payment(service, order, body.payment_method)
+    return await _start_order_payment(service, order, body.payment_method, request=request)
 
 
 @router.post("/miniapp/api/orders/renew/custom")
@@ -681,7 +681,7 @@ async def renew_subscription_custom(
             "plan_name": plan.name,
         },
     )
-    return await _start_order_payment(service, order, body.payment_method)
+    return await _start_order_payment(service, order, body.payment_method, request=request)
 
 
 @router.post("/miniapp/api/orders/topup")
@@ -703,7 +703,7 @@ async def top_up_balance(
         get_payment_provider(),
     )
     order = await service.create_balance_topup_order(user.id, body.amount)
-    return await _start_order_payment(service, order, body.payment_method)
+    return await _start_order_payment(service, order, body.payment_method, request=request)
 
 
 @router.post("/miniapp/api/orders/{order_uuid}/check")
@@ -2516,6 +2516,7 @@ async def _start_order_payment(
     service: OrderService,
     order: Order,
     payment_method: str,
+    request: Request | None = None,
 ) -> dict[str, Any]:
     if payment_method == "balance":
         if not await service.pay_from_balance(order):
@@ -2542,12 +2543,36 @@ async def _start_order_payment(
         confirmation_url = await service.start_payment(order, payment_method=provider_method)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(400, _safe_error(exc)) from exc
+
+    if request is not None:
+        try:
+            bot = getattr(request.app.state, "bot", None)
+            user_repo = UserRepository(service.session)
+            target_user = await user_repo.get_by_id(order.user_id)
+            if target_user and bot:
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                msg_text = (
+                    f"💳 <b>Счет на оплату #{order.order_uuid[:8]}</b>\n\n"
+                    f"💰 <b>Сумма к оплате:</b> <code>{float(order.amount):.2f} ₽</code>\n"
+                    f"👛 <b>Способ оплаты:</b> {label}\n\n"
+                    f"Нажмите кнопку ниже для перехода к оплате на официальном сайте:"
+                )
+                markup = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text=f"🚀 Оплатить {float(order.amount):.0f} ₽", url=confirmation_url)],
+                        [InlineKeyboardButton(text="🔄 Проверить оплату", callback_data=f"pay:check:{order.order_uuid}")],
+                    ]
+                )
+                await bot.send_message(target_user.telegram_id, msg_text, reply_markup=markup)
+        except Exception as exc:
+            logger.info("Mini App payment message send error: %s", exc)
+
     return {
         "ok": True,
         "completed": False,
         "order_uuid": order.order_uuid,
         "confirmation_url": confirmation_url,
-        "message": "Перейдите к оплате",
+        "message": "Ссылка на оплату отправлена вам в чат бота!",
     }
 
 
