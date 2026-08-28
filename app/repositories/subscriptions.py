@@ -20,7 +20,27 @@ class SubscriptionRepository(BaseRepository):
         return res.scalar_one_or_none()
 
     async def get_active_for_user(self, user_id: int) -> VPNSubscription | None:
-        """Return the most relevant subscription for a user (latest created)."""
+        """Return the most relevant subscription for a user (active/non-expired first, then latest)."""
+        now = datetime.now(timezone.utc)
+        # 1. Try to find currently active and non-expired subscription
+        res = await self.session.execute(
+            select(VPNSubscription)
+            .where(VPNSubscription.user_id == user_id)
+            .where(VPNSubscription.is_active.is_(True))
+            .where(
+                or_(
+                    VPNSubscription.expires_at.is_(None),
+                    VPNSubscription.expires_at > now,
+                )
+            )
+            .order_by(VPNSubscription.expires_at.desc().nullslast(), VPNSubscription.created_at.desc())
+            .limit(1)
+        )
+        active_sub = res.scalar_one_or_none()
+        if active_sub is not None:
+            return active_sub
+
+        # 2. Fallback to latest subscription
         res = await self.session.execute(
             select(VPNSubscription)
             .where(VPNSubscription.user_id == user_id)
