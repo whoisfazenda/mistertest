@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { AnimatePresence, MotionConfig } from 'framer-motion';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { BottomNav } from './components/BottomNav';
@@ -10,14 +10,14 @@ import { isMainTabPath } from './lib/tabs';
 import { initTelegram } from './lib/telegram';
 import { useAppStore } from './store/useAppStore';
 
-const HomeScreen = React.lazy(() => import('./screens/HomeScreen'));
-const PricingScreen = React.lazy(() => import('./screens/PricingScreen'));
-const DevicesScreen = React.lazy(() => import('./screens/DevicesScreen'));
-const ProfileScreen = React.lazy(() => import('./screens/ProfileScreen'));
-const AdminScreen = React.lazy(() => import('./screens/AdminScreen'));
-const HistoryScreen = React.lazy(() => import('./screens/HistoryScreen'));
-const PlanDetailScreen = React.lazy(() => import('./screens/PlanDetailScreen'));
-const SupportScreen = React.lazy(() => import('./screens/SupportScreen'));
+import HomeScreen from './screens/HomeScreen';
+import PricingScreen from './screens/PricingScreen';
+import DevicesScreen from './screens/DevicesScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import AdminScreen from './screens/AdminScreen';
+import HistoryScreen from './screens/HistoryScreen';
+import PlanDetailScreen from './screens/PlanDetailScreen';
+import SupportScreen from './screens/SupportScreen';
 
 export default function App() {
   const location = useLocation();
