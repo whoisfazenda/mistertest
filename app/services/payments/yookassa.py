@@ -131,13 +131,15 @@ class YooKassaProvider(PaymentProvider):
     async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         headers = {"Content-Type": "application/json"}
         headers.update(kwargs.pop("headers", {}) or {})
+        timeout_val = float(self.timeout or 25.0)
         async with httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=httpx.Timeout(self.timeout),
+            timeout=httpx.Timeout(connect=15.0, read=timeout_val, write=15.0, pool=15.0),
             transport=self.transport,
             auth=(self.shop_id, self.secret_key),
             headers=headers,
             verify=False,
+            follow_redirects=True,
         ) as client:
             try:
                 response = await client.request(method, path, **kwargs)
