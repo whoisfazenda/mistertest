@@ -5,6 +5,7 @@ Docs: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/ma
 from __future__ import annotations
 
 import json
+import logging
 from decimal import Decimal
 from typing import Any
 
@@ -13,6 +14,8 @@ import httpx
 from app.core.config import settings
 from app.core.enums import PaymentStatus
 from app.services.payments.base import PaymentProvider, PaymentResult, WebhookResult
+
+logger = logging.getLogger(__name__)
 
 
 class YooKassaError(Exception):
@@ -96,34 +99,14 @@ class YooKassaProvider(PaymentProvider):
                 raw=data,
             )
         except YooKassaError as exc:
-            # Safe YooMoney gateway fallback: always generate immediate payment link so client is never blocked
-            from urllib.parse import urlencode
-            receiver = self.shop_id if (self.shop_id and self.shop_id.isdigit() and len(self.shop_id) > 10) else "410011894451234"
-            params = {
-                "receiver": receiver,
-                "quickpay-form": "shop",
-                "targets": f"Оплата тарифа #{order_uuid[:8]}",
-                "paymentType": "SB" if payment_method == "sbp" else "AC",
-                "sum": _money(amount),
-                "label": order_uuid,
-                "successURL": self.return_url,
-            }
-            fallback_url = f"https://yoomoney.ru/quickpay/confirm.xml?{urlencode(params)}"
-            return PaymentResult(
-                payment_id=f"ym_gw_{order_uuid[:12]}",
-                confirmation_url=fallback_url,
-                status=PaymentStatus.PENDING,
-                raw={"fallback": True, "error": str(exc)},
-            )
+            logger.error("YooKassa payment creation error: %s", exc)
+            raise
 
     async def get_payment_status(self, payment_id: str) -> PaymentStatus:
-        if not payment_id or payment_id.startswith("ym_gw_"):
+        if not payment_id:
             return PaymentStatus.PENDING
-        try:
-            data = await self._request("GET", f"/v3/payments/{payment_id}")
-            return _map_status(data)
-        except Exception:
-            return PaymentStatus.PENDING
+        data = await self._request("GET", f"/v3/payments/{payment_id}")
+        return _map_status(data)
 
     async def handle_webhook(self, raw_body: bytes, headers: dict[str, str]) -> WebhookResult:
         try:
@@ -145,7 +128,7 @@ class YooKassaProvider(PaymentProvider):
         proxy_url = (getattr(self, "proxy_url", None) or settings.yookassa_proxy_url) or None
         async with httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=httpx.Timeout(connect=3.0, read=4.0, write=3.0, pool=3.0),
+            timeout=httpx.Timeout(connect=10.0, read=15.0, write=10.0, pool=10.0),
             transport=self.transport,
             proxy=proxy_url,
             auth=(self.shop_id, self.secret_key),
