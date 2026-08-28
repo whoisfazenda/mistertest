@@ -137,6 +137,7 @@ class YooKassaProvider(PaymentProvider):
             transport=self.transport,
             auth=(self.shop_id, self.secret_key),
             headers=headers,
+            verify=False,
         ) as client:
             try:
                 response = await client.request(method, path, **kwargs)

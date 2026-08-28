@@ -2529,7 +2529,7 @@ async def _start_order_payment(
             }
         outcome = await service.provision(order)
         if not (outcome.provisioned or outcome.already_done):
-            raise HTTPException(502, outcome.error or "Не удалось выдать VPN")
+            raise HTTPException(400, outcome.error or "Не удалось выдать VPN")
         return {"ok": True, "completed": True, "order_uuid": order.order_uuid}
 
     provider_name, provider_method, label = _payment_config(payment_method)
@@ -2542,7 +2542,7 @@ async def _start_order_payment(
     try:
         confirmation_url = await service.start_payment(order, payment_method=provider_method)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(502, _safe_error(exc)) from exc
+        raise HTTPException(400, _safe_error(exc)) from exc
     return {
         "ok": True,
         "completed": False,
