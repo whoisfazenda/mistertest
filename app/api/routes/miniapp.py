@@ -39,6 +39,7 @@ from app.db.models.user import User
 from app.repositories.orders import OrderRepository
 from app.repositories.plans import PlanRepository
 from app.repositories.promos import PromoRepository
+from app.repositories.settings import SettingsRepository
 from app.repositories.subscriptions import SubscriptionRepository
 from app.repositories.users import UserRepository
 from app.services.miniapp_auth import MiniAppIdentity, get_miniapp_identity
