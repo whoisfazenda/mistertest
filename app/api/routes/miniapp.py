@@ -405,14 +405,6 @@ async def miniapp_bootstrap(
     sub = await SubscriptionRepository(session).get_active_for_user(user.id)
     devices: list[dict[str, Any]] = []
     service_online = True
-    sub_service = SubscriptionService(session, request.app.state.adaptgroup_client)
-    if sub is not None:
-        try:
-            now = datetime.now(timezone.utc)
-            if sub.expires_at is None or sub.expires_at <= now:
-                sub = await asyncio.wait_for(sub_service.refresh_from_api(sub), timeout=2.0)
-        except Exception:
-            pass
     plan_service = PlanService(session, request.app.state.adaptgroup_client)
     plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
     if not plans:

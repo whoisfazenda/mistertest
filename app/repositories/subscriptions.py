@@ -20,34 +20,23 @@ class SubscriptionRepository(BaseRepository):
         return res.scalar_one_or_none()
 
     async def get_active_for_user(self, user_id: int) -> VPNSubscription | None:
-        """Return the most relevant subscription for a user (active/non-expired first, then latest)."""
+        """Return the most relevant subscription for a user."""
+        res = await self.session.execute(
+            select(VPNSubscription)
+            .where(VPNSubscription.user_id == user_id)
+            .order_by(VPNSubscription.is_active.desc(), VPNSubscription.created_at.desc())
+        )
+        subs = list(res.scalars().all())
+        if not subs:
+            return None
         now = datetime.now(timezone.utc)
-        # 1. Try to find currently active and non-expired subscription
-        res = await self.session.execute(
-            select(VPNSubscription)
-            .where(VPNSubscription.user_id == user_id)
-            .where(VPNSubscription.is_active.is_(True))
-            .where(
-                or_(
-                    VPNSubscription.expires_at.is_(None),
-                    VPNSubscription.expires_at > now,
-                )
-            )
-            .order_by(VPNSubscription.expires_at.desc().nullslast(), VPNSubscription.created_at.desc())
-            .limit(1)
-        )
-        active_sub = res.scalar_one_or_none()
-        if active_sub is not None:
-            return active_sub
-
-        # 2. Fallback to latest subscription
-        res = await self.session.execute(
-            select(VPNSubscription)
-            .where(VPNSubscription.user_id == user_id)
-            .order_by(VPNSubscription.created_at.desc())
-            .limit(1)
-        )
-        return res.scalar_one_or_none()
+        for s in subs:
+            exp = s.expires_at
+            if exp is not None and exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if s.is_active and (exp is None or exp > now):
+                return s
+        return subs[0]
 
     async def list_for_user(self, user_id: int) -> list[VPNSubscription]:
         res = await self.session.execute(
