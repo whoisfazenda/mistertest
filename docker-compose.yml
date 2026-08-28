@@ -1,4 +1,13 @@
 services:
+  xray:
+    image: teddysun/xray:latest
+    restart: unless-stopped
+    volumes:
+      - ./xray-config.json:/etc/xray/config.json
+    ports:
+      - "127.0.0.1:10808:10808"
+      - "127.0.0.1:10809:10809"
+
   migrate:
     build: .
     command: alembic upgrade head
@@ -16,6 +25,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      xray:
+        condition: service_started
     restart: unless-stopped
 
   api:
@@ -27,6 +38,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      xray:
+        condition: service_started
     ports:
       - "0.0.0.0:${WEBHOOK_PORT:-8080}:8080"
     restart: unless-stopped
