@@ -2,191 +2,661 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mister VPN - подписка</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Mister VPN — Ваша подписка</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
-      --bg:#050505; --card:#101010; --soft:#181818; --line:#2a2a2a;
-      --text:#f4f4f4; --muted:#8d8d8d; --ok:#16c784; --danger:#ef4444;
+      --bg: #050507;
+      --card-bg: rgba(255, 255, 255, 0.035);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(255, 255, 255, 0.18);
+      --txt-main: #f4f4f6;
+      --txt-muted: #8e8e9a;
+      --txt-dim: #5a5a68;
+      --primary-gradient: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.25);
     }
-    * { box-sizing:border-box }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      margin:0; background:var(--bg); color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      overflow-x:hidden;
+      margin: 0;
+      background: var(--bg);
+      color: var(--txt-main);
+      font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 100% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 0% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 40%);
     }
-    .wrap { width:min(620px,100%); margin:0 auto; padding:24px 14px 38px }
-    .brand { display:flex; align-items:center; gap:12px; margin-bottom:28px; font-weight:800 }
-    .logo { width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
-      background:linear-gradient(180deg,#fff,#8b8b8b); color:#050505; font-weight:900 }
-    .hero { text-align:center; padding:8px 0 26px }
-    .mark { width:70px; height:70px; margin:0 auto 16px; border-radius:22px; display:grid;
-      place-items:center; background:radial-gradient(circle,#3b3b3b,#111);
-      box-shadow:0 0 44px rgba(255,255,255,.14); color:#fff; font-size:30px }
-    h1 { margin:0; font-size:38px; line-height:1.04; letter-spacing:-.01em }
-    .subtitle { color:var(--muted); margin:10px 0 0; line-height:1.45 }
+    .wrap {
+      width: min(580px, 100%);
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+    }
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #ffffff, #888888);
+      color: #050507;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+    }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--txt-muted);
+    }
     .card {
-      border:1px solid var(--line); border-radius:20px; background:var(--card);
-      padding:22px 24px; margin:14px 0;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 22px;
+      margin: 14px 0;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.2s, transform 0.2s;
     }
-    .card h2 { margin:0 0 16px; font-size:14px; color:var(--muted);
-      text-transform:uppercase; letter-spacing:.08em }
-    .status { display:inline-flex; padding:7px 12px; border-radius:999px;
-      background:rgba(22,199,132,.12); color:var(--ok); font-weight:800; font-size:13px }
-    .big { display:block; margin:8px 0 4px; font-size:40px; font-weight:900 }
-    .muted { color:var(--muted) }
-    .stats { display:grid; grid-template-columns:1fr 1fr; gap:12px }
-    .mini { border:1px solid var(--line); border-radius:16px; background:var(--soft); padding:14px }
-    .mini b { display:block; font-size:24px; margin-top:5px }
-    .copybox { border:1px solid var(--line); border-radius:14px; background:#080808;
-      padding:14px; min-height:50px; word-break:break-all; font:13px ui-monospace,Consolas,monospace }
-    .btn { width:100%; min-height:48px; border:1px solid #3a3a3a; border-radius:14px;
-      background:#1a1a1a; color:#fff; font-weight:850; cursor:pointer; text-decoration:none;
-      display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px }
-    .btn.primary { background:linear-gradient(180deg,#fff,#b7b7b7); color:#050505 }
-    .btn.danger { background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); color:#ffb4b4 }
-    .tabs { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px }
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: var(--accent-emerald);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    .hero-plan {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin: 2px 0 6px;
+      color: #fff;
+    }
+    .hero-date {
+      font-size: 13.5px;
+      color: var(--txt-muted);
+      margin-bottom: 16px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .stat-box {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 13px 15px;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--txt-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .stat-val {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 4px;
+      color: #fff;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .copybox {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px;
+      word-break: break-all;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      user-select: all;
+    }
+    .btn {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13.5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn.primary {
+      background: var(--primary-gradient);
+      color: #050507;
+      border: none;
+      box-shadow: 0 4px 24px rgba(255, 255, 255, 0.18);
+    }
+    .btn.danger {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
     .tab {
-      border:1px solid var(--line); background:var(--soft); color:var(--muted);
-      min-height:42px; border-radius:13px; padding:0 14px; font-weight:850; cursor:pointer;
+      flex: 1;
+      min-width: 80px;
+      min-height: 40px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--txt-muted);
+      border-radius: 14px;
+      padding: 0 12px;
+      font-weight: 800;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
     }
-    .tab.active { background:#f5f5f5; color:#050505; border-color:#f5f5f5 }
-    .app-layout { display:grid; grid-template-columns:170px 1fr; gap:14px; align-items:start }
-    .app-list { display:grid; gap:8px }
-    .app-choice {
-      border:1px solid var(--line); background:var(--soft); color:#fff; border-radius:14px;
-      min-height:46px; padding:0 13px; font-weight:850; text-align:left; cursor:pointer;
+    .tab.active {
+      background: #ffffff;
+      color: #050507;
+      border-color: #ffffff;
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
     }
-    .app-choice.active { background:#f5f5f5; color:#050505; border-color:#f5f5f5 }
-    .app-panel { border:1px solid var(--line); border-radius:16px; background:var(--soft); padding:17px }
-    .app-panel h3 { margin:0; font-size:21px }
-    .steps { margin:10px 0 0; padding:0; list-style:none; color:var(--muted); line-height:1.7 }
-    .steps li::before { content:counter(step); counter-increment:step; display:inline-grid;
-      place-items:center; width:20px; height:20px; margin-right:10px; border:1px solid var(--line);
-      border-radius:50%; font-size:12px; color:#bdbdbd }
-    .steps { counter-reset:step }
-    .device { border-top:1px solid var(--line); padding:14px 0 }
-    .device:first-child { border-top:0; padding-top:0 }
-    .device-title { display:flex; justify-content:space-between; gap:12px; font-weight:850 }
-    .flash { border-radius:14px; padding:12px 14px; margin:0 0 14px; font-weight:800 }
-    .flash.ok { background:rgba(22,199,132,.12); color:#a9ffd9 }
-    .flash.err { background:rgba(239,68,68,.12); color:#ffc1c1 }
-    .qr { display:grid; place-items:center; padding:14px; border:1px solid var(--line);
-      border-radius:16px; background:#fff; margin-top:12px }
-    .qr img { width:min(220px,100%); display:block }
-    @media (max-width:540px) {
-      .stats { grid-template-columns:1fr } h1 { font-size:32px } .card { padding:18px }
-      .app-layout { grid-template-columns:1fr }
-      .app-list { grid-template-columns:1fr 1fr }
+    .app-choices {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .app-btn {
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--txt-muted);
+      border-radius: 14px;
+      min-height: 42px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .app-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+    .app-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .app-panel h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .app-panel p {
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: var(--txt-muted);
+      line-height: 1.5;
+    }
+    .steps {
+      margin: 0 0 16px;
+      padding: 0;
+      list-style: none;
+      counter-reset: step;
+    }
+    .steps li {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 10px;
+      font-size: 12.5px;
+      color: #d1d5db;
+      line-height: 1.5;
+    }
+    .steps li::before {
+      content: counter(step);
+      counter-increment: step;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--txt-muted);
+      font-size: 10px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+    }
+    .device-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .device-item:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+    .device-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .device-sub {
+      font-size: 11px;
+      color: var(--txt-dim);
+      margin-top: 2px;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .qr-container {
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 20px;
+      margin-top: 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+    .qr-container img {
+      width: min(220px, 100%);
+      height: auto;
+      display: block;
+      border-radius: 8px;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #050507;
+      font-weight: 800;
+      font-size: 12.5px;
+      z-index: 1000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes pop {
+      0% { opacity: 0; transform: translate(-50%, 10px) scale(0.9); }
+      100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <div class="brand"><div class="logo">M</div><div>mistervpn</div></div>
-    
-    <section class="hero">
-      <div class="mark">◆</div>
-      <p class="muted">Подписка активна до <b>07.07.2026 18:41 UTC</b></p>
-      <h1>Выберите приложение</h1>
-      <p class="subtitle">Скопируйте ключ или добавьте его в приложение вручную. Ниже есть QR-код и управление устройствами.</p>
-    </section>
+    <!-- Header -->
+    <header class="brand">
+      <div class="brand-left">
+        <div class="logo">M</div>
+        <div>Mister VPN</div>
+      </div>
+      <div class="brand-badge">
+        <span>⚡ 10 Gbps</span>
+      </div>
+    </header>
 
+    <!-- Subscription Status Card -->
     <section class="card">
-      <div style="display:flex;justify-content:space-between;gap:12px;align-items:start">
-        <div>
-          <h2>Подписка</h2>
-          <div class="muted">Mister Pro | 14days | 5 devices | LTE 21GB</div>
-          <span class="big">07.07.2026</span>
-          <div class="muted">11 дн. осталось</div>
+      <div class="card-title">
+        <h2>Текущая подписка</h2>
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          <span>Активна</span>
         </div>
-        <span class="status">Активна</span>
+      </div>
+
+      <div class="hero-plan">Mister Pro · 5 устройств</div>
+      <div class="hero-date">Действует до <b>07.07.2026 18:41 UTC</b> (осталось 11 дн.)</div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Устройства</div>
+          <div class="stat-val">1 / 5</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Трафик</div>
+          <div class="stat-val">Безлимит</div>
+        </div>
       </div>
     </section>
 
+    <!-- Quick Import Card -->
     <section class="card">
-      <h2>Ссылка</h2>
+      <div class="card-title">
+        <h2>Ссылка на подключение</h2>
+      </div>
+
       <div class="copybox" id="subUrl">https://network-api.adaptgroup.app/sub/preview</div>
-      <button class="btn primary" onclick="copySub()">Скопировать ссылку</button>
-      <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=https%3A//network-api.adaptgroup.app/sub/preview" alt="QR-код подписки"></div>
-    </section>
-
-    <section class="card stats">
-      <div class="mini"><span class="muted">Устройства</span><b>1 / 5</b></div>
-      <div class="mini"><span class="muted">Свободно</span><b>4</b></div>
-      <div class="mini"><span class="muted">Трафик</span><b>0.0 ГБ из 21.0 ГБ</b></div>
-      <div class="mini"><span class="muted">Статус</span><b>Активна</b></div>
-    </section>
-
-    <section class="card">
-      <h2>Устройства</h2>
       
-      <div class="device">
-        <div class="device-title"><span>iPhone 14 Pro</span><span class="muted">iOS</span></div>
-        <div class="muted">IP: 178.157.184.14<br>Последняя активность: 2026-06-24T23:15:00</div>
-        
-        <form method="post" action="/s/preview/devices/1/delete" onsubmit="return confirm('Удалить это устройство?')">
-          <button class="btn danger" type="submit">Удалить устройство</button>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button class="btn primary" onclick="copySub()">📋 Скопировать</button>
+        <button class="btn" onclick="toggleQr()">📱 QR-код</button>
+      </div>
+
+      <div id="qrBox" class="qr-container" style="display: none;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=https%3A//network-api.adaptgroup.app/sub/preview" alt="QR подписки">
+      </div>
+    </section>
+
+    <!-- Applications & Guides -->
+    <section class="card">
+      <div class="card-title">
+        <h2>Настройка приложений</h2>
+      </div>
+
+      <div class="tabs" id="platformTabs"></div>
+      <div class="app-choices" id="appChoices"></div>
+      <div class="app-panel" id="appPanel"></div>
+    </section>
+
+    <!-- Active Devices -->
+    <section class="card">
+      <div class="card-title">
+        <h2>Подключенные устройства</h2>
+      </div>
+
+      <div class="device-item">
+        <div>
+          <div class="device-name">📱 iPhone 14 Pro (iOS)</div>
+          <div class="device-sub">IP: 178.157.184.14 · Активность: Недавно</div>
+        </div>
+        <form method="post" action="/s/preview/devices/1/delete" onsubmit="return confirm('Отключить это устройство?')">
+          <button class="btn danger" type="submit" style="min-height: 36px; padding: 0 12px; font-size: 11.5px; border-radius: 12px;">Удалить</button>
         </form>
       </div>
     </section>
-
-    <section class="card">
-      <h2>Приложения</h2>
-      
-      <div class="tabs" id="platformTabs"></div>
-      <div class="app-layout">
-        <div class="app-list" id="appTabs"></div>
-        <div class="app-panel" id="appPanel"></div>
-      </div>
-    </section>
   </main>
+
   <script>
     const subUrl = "https://network-api.adaptgroup.app/sub/preview";
+
     async function copySub() {
       if (!subUrl) return;
       try {
         await navigator.clipboard.writeText(subUrl);
-        toast("Ссылка скопирована");
+        toast("✅ Ссылка подписки скопирована!");
       } catch (e) {
-        prompt("Скопируйте ссылку:", subUrl);
+        prompt("Скопируйте ссылку подписки:", subUrl);
       }
     }
+
+    function toggleQr() {
+      const q = document.getElementById("qrBox");
+      q.style.display = q.style.display === "none" ? "grid" : "none";
+    }
+
     function toast(text) {
       const el = document.createElement("div");
+      el.className = "toast";
       el.textContent = text;
-      el.style.cssText = "position:fixed;left:50%;bottom:22px;transform:translateX(-50%);padding:11px 15px;border-radius:999px;background:#fff;color:#000;font-weight:850;z-index:50";
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1600);
+      setTimeout(() => el.remove(), 2200);
     }
-    const apps = {"iphone": {"label": "iPhone", "items": [{"name": "Happ", "lead": "Самый быстрый вариант для iPhone, если приложение уже установлено.", "download": "https://apps.apple.com/us/app/happ-proxy-utility/id6504287215", "steps": ["Нажмите «Скопировать ссылку» на этой странице.", "Откройте Happ и нажмите кнопку «+».", "Выберите импорт из буфера обмена или вставьте ссылку вручную.", "Обновите профиль и подключитесь к подходящему серверу."]}, {"name": "Incy", "lead": "Удобный клиент для импорта подписки по ссылке.", "download": "https://apps.apple.com/us/app/incy/id6756943388", "steps": ["Скопируйте ссылку подписки.", "Откройте Incy и выберите добавление новой подписки.", "Вставьте ссылку из буфера обмена.", "Сохраните профиль, обновите список серверов и подключитесь."]}, {"name": "V2RayTun", "lead": "Подходит, если нужен простой импорт подписки и быстрый старт.", "download": "https://apps.apple.com/us/app/v2raytun/id6476628951", "steps": ["Скопируйте ссылку подписки.", "Откройте V2RayTun и нажмите добавление профиля.", "Выберите импорт из буфера обмена или URL.", "Обновите подписку и включите VPN."]}, {"name": "Karing", "lead": "Хороший вариант, если другие приложения не импортируют ссылку.", "download": "https://apps.apple.com/us/app/karing/id6472431552", "steps": ["Скопируйте ссылку подписки.", "Откройте Karing и добавьте профиль по URL.", "Вставьте ссылку, сохраните и обновите профиль.", "Выберите сервер и подключитесь."]}]}, "android": {"label": "Android", "items": [{"name": "Happ", "lead": "Простой вариант для Android с импортом из буфера.", "download": "https://play.google.com/store/apps/details?id=com.happproxy&hl=ru", "steps": ["Скопируйте ссылку подписки.", "Откройте Happ и нажмите «Добавить».", "Импортируйте ссылку из буфера обмена.", "Обновите профиль и подключитесь."]}, {"name": "Incy", "lead": "Удобный Android-клиент для импорта подписки по ссылке.", "download": "https://play.google.com/store/apps/details?id=llc.itdev.incy&hl=ru", "steps": ["Скопируйте ссылку подписки.", "Откройте Incy и выберите добавление подписки.", "Вставьте ссылку вручную или импортируйте её из буфера.", "Обновите профиль и включите VPN."]}, {"name": "V2RayTun", "lead": "Удобный Android-клиент для подписок.", "download": "https://play.google.com/store/apps/details?id=com.v2raytun.android&hl=ru", "steps": ["Скопируйте ссылку подписки.", "Откройте V2RayTun и нажмите «+».", "Выберите импорт из буфера или URL подписки.", "Обновите подписку и включите VPN."]}, {"name": "Karing", "lead": "Кроссплатформенный клиент с ручным добавлением URL.", "download": "https://github.com/KaringX/karing/releases", "steps": ["Откройте страницу релизов Karing.", "Скачайте Android APK для вашего устройства.", "Скопируйте ссылку подписки.", "Добавьте новый профиль по URL.", "Обновите профиль и подключитесь."]}]}, "pc": {"label": "ПК", "items": [{"name": "Happ", "lead": "Desktop-клиент Happ для Windows, macOS и Linux.", "download": "https://github.com/Happ-proxy/happ-desktop/releases", "steps": ["Откройте GitHub Releases и скачайте версию для вашей системы.", "Скопируйте ссылку подписки на этой странице.", "Добавьте подписку через «+», URL или импорт из буфера.", "Обновите профиль и подключитесь."]}, {"name": "Incy", "lead": "Desktop-версии Incy для ПК.", "download": "https://github.com/INCY-DEV/incy-platforms/releases", "steps": ["Откройте GitHub Releases и скачайте сборку для вашей системы.", "Скопируйте ссылку подписки.", "Создайте новую подписку и вставьте URL.", "Сохраните профиль, обновите список серверов и подключитесь."]}, {"name": "V2RayTun", "lead": "ПК-клиент V2RayTun с релизами на GitHub.", "download": "https://github.com/DigneZzZ/v2raytun/releases", "steps": ["Откройте GitHub Releases и скачайте подходящий файл.", "Скопируйте ссылку подписки.", "Добавьте профиль через импорт из буфера или URL.", "Обновите подписку и включите VPN."]}, {"name": "Karing", "lead": "Простой вариант для Windows/macOS с импортом URL.", "download": "https://github.com/KaringX/karing/releases", "steps": ["Скачайте версию для вашей системы.", "Скопируйте ссылку подписки на этой странице.", "Добавьте новый профиль по URL.", "Обновите профиль, выберите сервер и подключитесь."]}]}};
+
+    const apps = {
+      "iphone": {
+        "label": "iPhone 📱",
+        "items": [
+          {
+            "name": "Happ",
+            "scheme": "happ://add/sub?url=",
+            "lead": "Рекомендуемый быстрый клиент для iOS.",
+            "download": "https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973",
+            "steps": [
+              "Установите Happ из App Store по кнопке ниже.",
+              "Нажмите «Импортировать в Happ» или скопируйте ссылку.",
+              "В приложении Happ нажмите кнопку подключения."
+            ]
+          },
+          {
+            "name": "Incy",
+            "scheme": "incy://sub?url=",
+            "lead": "Стильный и удобный клиент с поддержкой всех протоколов.",
+            "download": "https://apps.apple.com/app/incy/id6756943388",
+            "steps": [
+              "Установите Incy из App Store.",
+              "Скопируйте ссылку подписки и откройте Incy.",
+              "Вставьте ссылку через «+» и включите защиту."
+            ]
+          },
+          {
+            "name": "V2RayTun",
+            "scheme": "v2raytun://import/",
+            "lead": "Проверенное приложение для стабильной работы.",
+            "download": "https://apps.apple.com/us/app/v2raytun/id6476628951",
+            "steps": [
+              "Скачайте V2RayTun из App Store.",
+              "Импортируйте подписку по URL.",
+              "Выберите сервер и нажмите старт."
+            ]
+          },
+          {
+            "name": "Karing",
+            "scheme": "karing://install-config?url=",
+            "lead": "Универсальный клиент с расширенными настройками.",
+            "download": "https://apps.apple.com/us/app/karing/id6472431552",
+            "steps": [
+              "Установите Karing.",
+              "Добавьте профиль по скопированной ссылке.",
+              "Обновите серверы и подключитесь."
+            ]
+          }
+        ]
+      },
+      "android": {
+        "label": "Android 🤖",
+        "items": [
+          {
+            "name": "Happ",
+            "scheme": "happ://add/sub?url=",
+            "lead": "Лучший клиент под Android с автообновлением узлов.",
+            "download": "https://play.google.com/store/search?q=happ&c=apps&hl=ru",
+            "steps": [
+              "Установите Happ из Google Play.",
+              "Нажмите «Импортировать в Happ» или вставьте ссылку через «+».",
+              "Нажмите круглую кнопку включения."
+            ]
+          },
+          {
+            "name": "Incy",
+            "scheme": "incy://sub?url=",
+            "lead": "Быстрый Android-клиент без рекламы.",
+            "download": "https://play.google.com/store/apps/details?id=llc.itdev.incy",
+            "steps": [
+              "Скачайте Incy из Google Play.",
+              "Нажмите добавить подписку и вставьте URL.",
+              "Подключитесь к самому быстрому серверу."
+            ]
+          },
+          {
+            "name": "V2RayTun",
+            "scheme": "v2raytun://import/",
+            "lead": "Классический проверенный клиент.",
+            "download": "https://play.google.com/store/apps/details?id=com.v2raytun.android",
+            "steps": [
+              "Установите V2RayTun.",
+              "Нажмите «+» и выберите «Импорт из буфера».",
+              "Включите VPN переключателем."
+            ]
+          },
+          {
+            "name": "Karing",
+            "scheme": "karing://install-config?url=",
+            "lead": "Мощный клиент с поддержкой обхода блокировок.",
+            "download": "https://github.com/KaringX/karing/releases",
+            "steps": [
+              "Скачайте APK с официального GitHub.",
+              "Импортируйте ссылку подписки.",
+              "Запустите соединение."
+            ]
+          }
+        ]
+      },
+      "pc": {
+        "label": "Windows / Mac 💻",
+        "items": [
+          {
+            "name": "Happ Desktop",
+            "scheme": "happ://add/sub?url=",
+            "lead": "Приложение для Windows, macOS и Linux.",
+            "download": "https://www.happ.su/main/ru",
+            "steps": [
+              "Скачайте клиент с официального сайта happ.su.",
+              "Скопируйте ссылку подписки на этой странице.",
+              "Вставьте ссылку в приложение и нажмите Подключить."
+            ]
+          },
+          {
+            "name": "Incy PC",
+            "scheme": "incy://sub?url=",
+            "lead": "Легковесный клиент для компьютеров.",
+            "download": "https://github.com/INCY-DEV/incy-platforms/releases",
+            "steps": [
+              "Скачайте сборку для вашей ОС с GitHub.",
+              "Добавьте подписку по URL.",
+              "Включите системный прокси/VPN."
+            ]
+          },
+          {
+            "name": "Karing Desktop",
+            "scheme": "karing://install-config?url=",
+            "lead": "Кроссплатформенный клиент для Windows и Mac.",
+            "download": "https://github.com/KaringX/karing/releases",
+            "steps": [
+              "Установите Karing для вашей системы.",
+              "Импортируйте URL профиля.",
+              "Выберите сервер и нажмите Старт."
+            ]
+          },
+          {
+            "name": "V2RayTun PC",
+            "scheme": "v2raytun://import/",
+            "lead": "Стабильный клиент для Windows.",
+            "download": "https://github.com/DigneZzZ/v2raytun/releases",
+            "steps": [
+              "Скачайте exe-файл с релизов GitHub.",
+              "Вставьте скопированную ссылку.",
+              "Активируйте туннель."
+            ]
+          }
+        ]
+      }
+    };
+
     let currentPlatform = "iphone";
     let currentApp = 0;
+
     function renderApps() {
       const platform = apps[currentPlatform];
       const platformTabs = document.getElementById("platformTabs");
-      const appTabs = document.getElementById("appTabs");
+      const appChoices = document.getElementById("appChoices");
       const panel = document.getElementById("appPanel");
+
       platformTabs.innerHTML = Object.entries(apps).map(([key, value]) =>
         `<button class="tab ${key === currentPlatform ? "active" : ""}" onclick="currentPlatform='${key}';currentApp=0;renderApps()">${value.label}</button>`
       ).join("");
-      appTabs.innerHTML = platform.items.map((item, index) =>
-        `<button class="app-choice ${index === currentApp ? "active" : ""}" onclick="currentApp=${index};renderApps()">${item.name}</button>`
+
+      appChoices.innerHTML = platform.items.map((item, index) =>
+        `<button class="app-btn ${index === currentApp ? "active" : ""}" onclick="currentApp=${index};renderApps()">${item.name}</button>`
       ).join("");
+
       const app = platform.items[currentApp] || platform.items[0];
+      const launchUrl = app.scheme + encodeURIComponent(subUrl);
+
       panel.innerHTML = `
         <h3>${app.name}</h3>
-        <p class="muted">${app.lead}</p>
+        <p>${app.lead}</p>
         <ol class="steps">${app.steps.map(step => `<li>${step}</li>`).join("")}</ol>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-          <button class="btn primary" onclick="copySub()">Скопировать ссылку</button>
-          <a class="btn" href="${app.download}" target="_blank" rel="noopener">Скачать</a>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <a class="btn primary" href="${launchUrl}" onclick="setTimeout(copySub, 500)">🚀 Открыть в ${app.name}</a>
+          <a class="btn" href="${app.download}" target="_blank" rel="noopener">📥 Скачать клиент</a>
         </div>
       `;
     }
+
     renderApps();
   </script>
 </body>
 </html>
-

@@ -416,6 +416,22 @@ async def miniapp_bootstrap(
     trial_plan = None if user.trial_claimed or sub is not None else await _find_trial_plan(session)
     notifications = await _list_user_notifications(session, user.id, limit=20)
     await session.commit()
+    settings_repo = SettingsRepository(session)
+    app_settings = await settings_repo.get_all()
+    app_name = app_settings.get("app_name") or "Mister VPN"
+    support_url = app_settings.get("support_url") or settings.support_url
+    channel_url = app_settings.get("channel_url") or "https://t.me/misterfvpn_channel"
+    currency = app_settings.get("currency") or settings.currency
+    min_topup = float(app_settings.get("min_topup") or settings.min_balance_topup or 50.0)
+    max_topup = float(app_settings.get("max_topup") or settings.max_balance_topup or 10000.0)
+    feature_referral = app_settings.get("feature_referral", "true").lower() in {"1", "true", "yes", "on"}
+    feature_trial = app_settings.get("feature_trial", "true").lower() in {"1", "true", "yes", "on"}
+    feature_topup = app_settings.get("feature_topup", "true").lower() in {"1", "true", "yes", "on"}
+    feature_promos = app_settings.get("feature_promos", "true").lower() in {"1", "true", "yes", "on"}
+    feature_gifts = app_settings.get("feature_gifts", "true").lower() in {"1", "true", "yes", "on"}
+    feature_support = app_settings.get("feature_support", "true").lower() in {"1", "true", "yes", "on"}
+    feature_maintenance = app_settings.get("feature_maintenance", "false").lower() in {"1", "true", "yes", "on"}
+
     return {
         "user": _serialize_user(user, identity),
         "subscription": _serialize_subscription(sub, devices) if sub else None,
@@ -424,13 +440,25 @@ async def miniapp_bootstrap(
         "orders": [_serialize_order(order) for order in orders],
         "notifications": [_serialize_notification(item) for item in notifications],
         "notification_unread": sum(1 for item in notifications if item.read_at is None),
-        "service": {"online": True, "message": ""},
-        "trial": _serialize_trial_offer(trial_plan),
+        "service": {
+            "online": not feature_maintenance or identity.is_admin,
+            "message": "Ведутся плановые технические работы. Сервис скоро возобновит работу!" if feature_maintenance else "",
+        },
+        "trial": _serialize_trial_offer(trial_plan) if feature_trial else None,
         "config": {
-            "support_url": settings.support_url,
-            "currency": settings.currency,
-            "min_topup": float(settings.min_balance_topup),
-            "max_topup": float(settings.max_balance_topup),
+            "app_name": app_name,
+            "support_url": support_url,
+            "channel_url": channel_url,
+            "currency": currency,
+            "min_topup": min_topup,
+            "max_topup": max_topup,
+            "feature_referral": feature_referral,
+            "feature_trial": feature_trial,
+            "feature_topup": feature_topup,
+            "feature_promos": feature_promos,
+            "feature_gifts": feature_gifts,
+            "feature_support": feature_support,
+            "feature_maintenance": feature_maintenance,
             "local_preview": identity.is_local_preview,
             "server_selection_supported": False,
             "server_mode": "automatic",
@@ -1740,6 +1768,99 @@ async def admin_create_promo(
             "max_uses": promo.max_uses,
         },
     }
+
+
+class AdminSettingsUpdateBody(BaseModel):
+    app_name: str | None = None
+    support_url: str | None = None
+    channel_url: str | None = None
+    currency: str | None = None
+    min_topup: float | None = None
+    max_topup: float | None = None
+    feature_referral: bool | None = None
+    feature_trial: bool | None = None
+    feature_topup: bool | None = None
+    feature_promos: bool | None = None
+    feature_gifts: bool | None = None
+    feature_support: bool | None = None
+    feature_maintenance: bool | None = None
+    referral_bonus_rub: float | None = None
+    referral_reward_percent: float | None = None
+
+
+@router.get("/miniapp/api/admin/settings")
+async def get_admin_settings(
+    identity: MiniAppIdentity = Depends(get_miniapp_identity),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    admin = await _current_user(session, identity)
+    _require_admin(identity, admin)
+    repo = SettingsRepository(session)
+    vals = await repo.get_all()
+    return {
+        "app_name": vals.get("app_name") or "Mister VPN",
+        "support_url": vals.get("support_url") or settings.support_url or "https://t.me/misterfvpn_bot",
+        "channel_url": vals.get("channel_url") or "https://t.me/misterfvpn_channel",
+        "currency": vals.get("currency") or settings.currency or "RUB",
+        "min_topup": float(vals.get("min_topup") or settings.min_balance_topup or 50.0),
+        "max_topup": float(vals.get("max_topup") or settings.max_balance_topup or 10000.0),
+        "feature_referral": vals.get("feature_referral", "true").lower() in {"1", "true", "yes", "on"},
+        "feature_trial": vals.get("feature_trial", "true").lower() in {"1", "true", "yes", "on"},
+        "feature_topup": vals.get("feature_topup", "true").lower() in {"1", "true", "yes", "on"},
+        "feature_promos": vals.get("feature_promos", "true").lower() in {"1", "true", "yes", "on"},
+        "feature_gifts": vals.get("feature_gifts", "true").lower() in {"1", "true", "yes", "on"},
+        "feature_support": vals.get("feature_support", "true").lower() in {"1", "true", "yes", "on"},
+        "feature_maintenance": vals.get("feature_maintenance", "false").lower() in {"1", "true", "yes", "on"},
+        "referral_bonus_rub": float(vals.get("referral_bonus_rub") or 50.0),
+        "referral_reward_percent": float(vals.get("referral_reward_percent") or 15.0),
+    }
+
+
+@router.post("/miniapp/api/admin/settings")
+async def update_admin_settings(
+    body: AdminSettingsUpdateBody,
+    identity: MiniAppIdentity = Depends(get_miniapp_identity),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    admin = await _current_user(session, identity)
+    _require_admin(identity, admin)
+    repo = SettingsRepository(session)
+
+    updates: dict[str, str | None] = {}
+    if body.app_name is not None:
+        updates["app_name"] = body.app_name.strip()
+    if body.support_url is not None:
+        updates["support_url"] = body.support_url.strip()
+    if body.channel_url is not None:
+        updates["channel_url"] = body.channel_url.strip()
+    if body.currency is not None:
+        updates["currency"] = body.currency.strip()
+    if body.min_topup is not None:
+        updates["min_topup"] = str(body.min_topup)
+    if body.max_topup is not None:
+        updates["max_topup"] = str(body.max_topup)
+    if body.feature_referral is not None:
+        updates["feature_referral"] = "true" if body.feature_referral else "false"
+    if body.feature_trial is not None:
+        updates["feature_trial"] = "true" if body.feature_trial else "false"
+    if body.feature_topup is not None:
+        updates["feature_topup"] = "true" if body.feature_topup else "false"
+    if body.feature_promos is not None:
+        updates["feature_promos"] = "true" if body.feature_promos else "false"
+    if body.feature_gifts is not None:
+        updates["feature_gifts"] = "true" if body.feature_gifts else "false"
+    if body.feature_support is not None:
+        updates["feature_support"] = "true" if body.feature_support else "false"
+    if body.feature_maintenance is not None:
+        updates["feature_maintenance"] = "true" if body.feature_maintenance else "false"
+    if body.referral_bonus_rub is not None:
+        updates["referral_bonus_rub"] = str(body.referral_bonus_rub)
+    if body.referral_reward_percent is not None:
+        updates["referral_reward_percent"] = str(body.referral_reward_percent)
+
+    await repo.bulk_set(updates)
+    await session.commit()
+    return await get_admin_settings(identity, session)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
