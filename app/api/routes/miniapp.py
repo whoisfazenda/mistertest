@@ -2577,8 +2577,22 @@ async def _start_order_payment(
 
 
 def _payment_config(method: str) -> tuple[str, str | None, str]:
+    default_provider = (settings.payment_provider or "rollypay").lower()
+    if default_provider == "rollypay":
+        mapping: dict[str, tuple[str, str | None, str]] = {
+            "sbp": ("rollypay", "sbp", "СБП (RollyPay)"),
+            "card": ("rollypay", "card", "Банковская карта (RollyPay)"),
+            "crypto": ("rollypay", "crypto", "Криптовалюта (RollyPay)"),
+            "rollypay": ("rollypay", None, "RollyPay"),
+            "xrocket": ("rollypay", "xrocket", "xRocket"),
+            "cryptobot": ("rollypay", "cryptobot", "CryptoBot"),
+        }
+        if method in mapping:
+            return mapping[method]
+        return ("rollypay", None, "RollyPay")
+
     mapping: dict[str, tuple[str, str | None, str]] = {
-        "sbp": ("yookassa", "sbp", "СБП (ЮMoney)"),
+        "sbp": ("yookassa", "sbp", "СБП (ЮKassa)"),
         "yoomoney": ("yookassa", "sbp", "ЮMoney"),
         "yookassa": ("yookassa", "sbp", "ЮKassa"),
         "yookassa_sbp": ("yookassa", "sbp", "СБП через ЮKassa"),
@@ -2591,7 +2605,7 @@ def _payment_config(method: str) -> tuple[str, str | None, str]:
     }
     if method in mapping:
         return mapping[method]
-    return ("yookassa", "sbp", "СБП (ЮMoney)")
+    return ("yookassa", "sbp", "СБП (ЮKassa)")
 
 
 async def _sync_user_notifications(

@@ -275,15 +275,19 @@ def _payment_text(order) -> str:
 
 
 def _provider_for_payment_method(method: str) -> str:
+    if (settings.payment_provider or "").lower() == "rollypay":
+        return "rollypay"
     if method in {"yookassa_all", "yookassa_card", "yookassa_sbp"}:
         return "yookassa"
-    if method in {"crypto", "xrocket", "cryptobot"}:
+    if method in {"crypto", "xrocket", "cryptobot", "sbp", "card"}:
         return "rollypay"
     return settings.payment_provider
 
 
 def _provider_payment_method(method: str) -> str | None:
     mapping = {
+        "sbp": "sbp",
+        "card": "card",
         "yookassa_all": None,
         "yookassa_card": "bank_card",
         "yookassa_sbp": "sbp",
@@ -296,9 +300,11 @@ def _provider_payment_method(method: str) -> str | None:
 
 def _payment_method_label(method: str) -> str:
     labels = {
-        "yookassa_all": "Карта / СБП / ЮMoney",
-        "yookassa_card": "Картой через ЮKassa",
-        "yookassa_sbp": "СБП через ЮKassa",
+        "sbp": "СБП (QR-код)",
+        "card": "Банковская карта (РФ)",
+        "yookassa_all": "Карта / СБП (RollyPay)",
+        "yookassa_card": "Картой РФ",
+        "yookassa_sbp": "СБП (QR-код)",
         "crypto": "Криптовалютой через RollyPay",
         "xrocket": "xRocket через RollyPay",
         "cryptobot": "CryptoBot через RollyPay",
