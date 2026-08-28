@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Mister VPN — Ваша подписка</title>
+  <title>{{integration_name}} — Ваша подписка</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
       --bg: #050507;
       --card-bg: rgba(255, 255, 255, 0.035);
       --card-border: rgba(255, 255, 255, 0.08);
-      --card-border-hover: rgba(255, 255, 255, 0.18);
       --txt-main: #f4f4f6;
       --txt-muted: #8e8e9a;
       --txt-dim: #5a5a68;
@@ -64,6 +63,12 @@
       font-weight: 900;
       font-size: 18px;
       box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+    }
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .brand-badge {
       display: inline-flex;
@@ -86,7 +91,6 @@
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-      transition: border-color 0.2s, transform 0.2s;
     }
     .card-title {
       display: flex;
@@ -127,7 +131,7 @@
       50% { opacity: 0.5; transform: scale(1.2); }
     }
     .hero-plan {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 900;
       letter-spacing: -0.02em;
       margin: 2px 0 6px;
@@ -158,7 +162,7 @@
       letter-spacing: 0.04em;
     }
     .stat-val {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       margin-top: 4px;
       color: #fff;
@@ -369,8 +373,10 @@
     <!-- Header -->
     <header class="brand">
       <div class="brand-left">
-        <div class="logo">M</div>
-        <div>Mister VPN</div>
+        <div class="logo">
+          <img src="{{integration_avatar}}" onerror="this.style.display='none';this.parentElement.innerText='M'" alt="Logo">
+        </div>
+        <div>{{integration_name}}</div>
       </div>
       <div class="brand-badge">
         <span>⚡ 10 Gbps</span>
@@ -383,21 +389,21 @@
         <h2>Текущая подписка</h2>
         <div class="status-pill">
           <div class="status-dot"></div>
-          <span>Активна</span>
+          <span>{{sub_status}}</span>
         </div>
       </div>
 
-      <div class="hero-plan">Mister Pro · 5 устройств</div>
-      <div class="hero-date">Действует до <b>07.07.2026 18:41 UTC</b> (осталось 11 дн.)</div>
+      <div class="hero-plan">{{plan_name}} · {{plan_devices}} устройств</div>
+      <div class="hero-date">Действует до <b>{{sub_end_date_full}}</b> (осталось {{sub_days_left_text}})</div>
 
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-label">Устройства</div>
-          <div class="stat-val">1 / 5</div>
+          <div class="stat-val">{{sub_devices_used}} / {{sub_devices}}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">Трафик</div>
-          <div class="stat-val">Безлимит</div>
+          <div class="stat-val">{{sub_traffic_used_gb}} ГБ / {{sub_traffic_limit_gb}} ГБ</div>
         </div>
       </div>
     </section>
@@ -408,7 +414,7 @@
         <h2>Ссылка на подключение</h2>
       </div>
 
-      <div class="copybox" id="subUrl">https://network-api.adaptgroup.app/sub/preview</div>
+      <div class="copybox" id="subUrlBox">Загрузка ссылки...</div>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <button class="btn primary" onclick="copySub()">📋 Скопировать</button>
@@ -416,7 +422,7 @@
       </div>
 
       <div id="qrBox" class="qr-container" style="display: none;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=https%3A//network-api.adaptgroup.app/sub/preview" alt="QR подписки">
+        <img id="qrImg" src="" alt="QR подписки">
       </div>
     </section>
 
@@ -431,26 +437,28 @@
       <div class="app-panel" id="appPanel"></div>
     </section>
 
-    <!-- Active Devices -->
+    <!-- Active Device -->
     <section class="card">
       <div class="card-title">
-        <h2>Подключенные устройства</h2>
+        <h2>Активное устройство</h2>
       </div>
 
       <div class="device-item">
         <div>
-          <div class="device-name">📱 iPhone 14 Pro (iOS)</div>
-          <div class="device-sub">IP: 178.157.184.14 · Активность: Недавно</div>
+          <div class="device-name">📱 {{device_model}} ({{device_os}} {{device_os_version}})</div>
+          <div class="device-sub">Последняя активность: {{device_last_seen}}</div>
         </div>
-        <form method="post" action="/s/preview/devices/1/delete" onsubmit="return confirm('Отключить это устройство?')">
-          <button class="btn danger" type="submit" style="min-height: 36px; padding: 0 12px; font-size: 11.5px; border-radius: 12px;">Удалить</button>
-        </form>
       </div>
     </section>
   </main>
 
   <script>
-    const subUrl = "https://network-api.adaptgroup.app/sub/preview";
+    const subUrl = window.location.href;
+    const box = document.getElementById("subUrlBox");
+    if (box) box.textContent = subUrl;
+
+    const qr = document.getElementById("qrImg");
+    if (qr) qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(subUrl);
 
     async function copySub() {
       if (!subUrl) return;
