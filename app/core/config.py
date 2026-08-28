@@ -82,6 +82,7 @@ class Settings(BaseSettings):
     yookassa_secret_key: str = Field(default="", alias="YOOKASSA_SECRET_KEY")
     yookassa_return_url: str = Field(default="", alias="YOOKASSA_RETURN_URL")
     yookassa_timeout: float = Field(default=20.0, alias="YOOKASSA_TIMEOUT")
+    yookassa_proxy_url: str = Field(default="", alias="YOOKASSA_PROXY_URL")
 
     # ── App ──────────────────────────────────────────────────
     dev_mode: bool = Field(default=False, alias="DEV_MODE")

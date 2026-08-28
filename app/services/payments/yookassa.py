@@ -132,10 +132,12 @@ class YooKassaProvider(PaymentProvider):
         headers = {"Content-Type": "application/json"}
         headers.update(kwargs.pop("headers", {}) or {})
         timeout_val = float(self.timeout or 25.0)
+        proxy_url = (getattr(self, "proxy_url", None) or settings.yookassa_proxy_url) or None
         async with httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(connect=15.0, read=timeout_val, write=15.0, pool=15.0),
             transport=self.transport,
+            proxy=proxy_url,
             auth=(self.shop_id, self.secret_key),
             headers=headers,
             verify=False,
