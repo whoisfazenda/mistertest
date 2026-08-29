@@ -52,9 +52,16 @@ def _build_subscription_url(subscription_uuid: str, explicit: str | None) -> str
 
 
 def public_subscription_url(subscription_uuid: str) -> str:
-    """Return the branded URL, or the working AdaptGroup URL until one is configured."""
-    base = settings.public_base_url.strip() or DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL
-    return f"{base.rstrip('/')}/sub/{quote(subscription_uuid, safe='')}"
+    """Return the branded URL: https://sub.misterv.site/{uuid}."""
+    base = (
+        settings.subscription_base_url.strip()
+        or settings.public_base_url.strip()
+        or DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL
+    )
+    base = base.rstrip("/")
+    if "sub." in base.lower():
+        return f"{base}/{quote(subscription_uuid, safe='')}"
+    return f"{base}/sub/{quote(subscription_uuid, safe='')}"
 
 
 def upstream_subscription_url(

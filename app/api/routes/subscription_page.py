@@ -1,7 +1,8 @@
 """Public subscription management website and VPN node proxy.
 
 Provides:
-- Self-hosted web page on the bot's domain for user subscription management (1-click app launch, QR code, devices, speed tests).
+- Direct clean URLs on the bot's domain (e.g. https://sub.misterv.site/{uuid})
+- Self-hosted web page for user subscription management (1-click app launch, QR code, devices, speed tests).
 - High-performance transparent proxy for VPN client apps (Happ, Incy, V2RayTun, Karing, Sing-Box, Shadowrocket).
 """
 from __future__ import annotations
@@ -15,7 +16,7 @@ from typing import Any
 from urllib.parse import quote
 
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from app.clients.adaptgroup import _first
@@ -30,6 +31,22 @@ from app.services.subscriptions import (
 from app.utils.formatting import format_date, format_gb_used
 
 router = APIRouter()
+
+RESERVED_ROOT_PATHS = {
+    "health",
+    "webhook",
+    "miniapp",
+    "docs",
+    "redoc",
+    "openapi.json",
+    "favicon.ico",
+    "api",
+    "static",
+    "assets",
+    "s",
+    "sub",
+    "subscription",
+}
 
 _PASSTHROUGH_HEADERS = (
     "content-type",
@@ -119,6 +136,7 @@ async def subscription_page(request: Request, subscription_uuid: str) -> HTMLRes
 
 
 @router.post("/s/{subscription_uuid}/devices/{device_id}/delete")
+@router.post("/{subscription_uuid}/devices/{device_id}/delete")
 async def delete_subscription_device(
     request: Request,
     subscription_uuid: str,
@@ -132,9 +150,9 @@ async def delete_subscription_device(
         try:
             await service.delete_device(sub, str(device_id))
         except Exception:  # noqa: BLE001
-            url = f"/s/{quote(subscription_uuid)}?error={quote('Не удалось удалить устройство')}"
+            url = f"/{quote(subscription_uuid)}?error={quote('Не удалось удалить устройство')}"
             return RedirectResponse(url, status_code=303)
-    return RedirectResponse(f"/s/{quote(subscription_uuid)}?deleted=1", status_code=303)
+    return RedirectResponse(f"/{quote(subscription_uuid)}?deleted=1", status_code=303)
 
 
 @router.get("/sub/{subscription_uuid}")
@@ -179,6 +197,16 @@ async def proxy_subscription(request: Request, subscription_uuid: str) -> Respon
     )
 
 
+@router.get("/{subscription_uuid}")
+async def direct_subscription_route(request: Request, subscription_uuid: str) -> Response:
+    """Handle direct clean URLs like https://sub.misterv.site/{uuid}."""
+    if subscription_uuid in RESERVED_ROOT_PATHS or len(subscription_uuid) < 8:
+        raise HTTPException(status_code=404, detail="Not Found")
+    if _is_browser_request(request):
+        return await subscription_page(request, subscription_uuid)
+    return await proxy_subscription(request, subscription_uuid)
+
+
 def _upstream_request_headers(headers: Mapping[str, str]) -> dict[str, str]:
     forwarded: dict[str, str] = {}
     for name, value in headers.items():
@@ -216,7 +244,10 @@ def _render_page(
 ) -> str:
     sub_url = public_subscription_url(sub.subscription_uuid)
     if base_url:
-        sub_url = f"{base_url.rstrip('/')}/sub/{quote(sub.subscription_uuid, safe='')}"
+        if "sub." in base_url.lower():
+            sub_url = f"{base_url.rstrip('/')}/{quote(sub.subscription_uuid, safe='')}"
+        else:
+            sub_url = f"{base_url.rstrip('/')}/sub/{quote(sub.subscription_uuid, safe='')}"
 
     status = (
         "Истекла"
