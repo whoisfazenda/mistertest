@@ -89,6 +89,10 @@ class CustomRenewBody(PaymentMethodBody):
     days: int = Field(ge=3, le=365)
 
 
+class TrafficOrderBody(PaymentMethodBody):
+    gb: int = Field(ge=1, le=1000)
+
+
 class TopUpBody(BaseModel):
     amount: Decimal = Field(gt=0)
     payment_method: Literal["card", "sbp", "crypto", "xrocket", "cryptobot"] = "card"
@@ -710,6 +714,38 @@ async def renew_subscription_custom(
             "days": body.days,
             "plan_uuid": plan.plan_uuid,
             "plan_name": plan.name,
+        },
+    )
+    return await _start_order_payment(service, order, body.payment_method, request=request)
+
+
+@router.post("/miniapp/api/orders/traffic")
+async def purchase_traffic_order(
+    body: TrafficOrderBody,
+    request: Request,
+    identity: MiniAppIdentity = Depends(get_miniapp_identity),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    user = await _current_user(session, identity)
+    sub = await _require_subscription(session, user)
+    if sub.is_unlimited_traffic:
+        raise HTTPException(400, "У вас уже безлимитный трафик")
+    price_per_gb = Decimal(str(settings.traffic_price_per_gb or 3))
+    amount = (price_per_gb * body.gb).quantize(Decimal("0.01"))
+    service = OrderService(
+        session,
+        request.app.state.adaptgroup_client,
+        get_payment_provider(),
+    )
+    order = await service.create_action_order(
+        user.id,
+        OrderType.TRAFFIC,
+        sub.subscription_uuid,
+        amount=amount,
+        currency=settings.currency or "RUB",
+        extra={
+            "amount_gb": body.gb,
+            "subscription_uuid": sub.subscription_uuid,
         },
     )
     return await _start_order_payment(service, order, body.payment_method, request=request)

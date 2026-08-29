@@ -347,6 +347,18 @@ export async function topUp(
   );
 }
 
+export async function purchaseTraffic(
+  gb: number,
+  paymentMethod: PaymentMethod = 'balance',
+): Promise<PaymentResult> {
+  return normalizePayment(
+    await request('/miniapp/api/orders/traffic', {
+      method: 'POST',
+      body: JSON.stringify({ gb, payment_method: paymentMethod }),
+    }),
+  );
+}
+
 export async function deleteDevice(deviceId: string): Promise<void> {
   await request(`/miniapp/api/devices/${encodeURIComponent(deviceId)}`, {
     method: 'DELETE',

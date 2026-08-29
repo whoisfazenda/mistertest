@@ -3,6 +3,7 @@ import { BottomSheet } from './BottomSheet';
 import { GradientButton } from './GradientButton';
 import { hapticNotify, openLink, showAlert } from '../lib/telegram';
 import { useAppStore } from '../store/useAppStore';
+import * as api from '../api/client';
 import type { PaymentMethod } from '../api/client';
 
 interface TrafficTopupModalProps {
@@ -26,29 +27,25 @@ export function TrafficTopupModal({ isOpen, onClose }: TrafficTopupModalProps) {
 
   const handleBuyTraffic = async () => {
     if (loading) return;
+    if (method === 'balance' && !hasEnoughBalance) {
+      showAlert(`Недостаточно средств на балансе. Требуется ${totalPrice} ₽, у вас ${user?.balance ?? 0} ₽`);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Create request for traffic purchase
-      const res = await fetch('/miniapp/api/orders/topup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Telegram-Init-Data': (window as any).Telegram?.WebApp?.initData || '',
-        },
-        body: JSON.stringify({ amount: totalPrice, payment_method: method, extra: { gb_amount: gb } }),
-      });
-      const data = await res.json();
-      if (data.completed || data.ok) {
+      const res = await api.purchaseTraffic(gb, method);
+      if (res.completed) {
         hapticNotify('success');
-        showAlert(`Добавлено +${gb} ГБ трафика!`);
+        showAlert(`✅ Успешно начислено +${gb} ГБ дополнительного трафика!`);
         await refresh();
         onClose();
-      } else if (data.confirmation_url) {
-        openLink(data.confirmation_url);
-        showAlert('Перейдите к оплате для начисления трафика');
+      } else if (res.confirmationUrl) {
+        openLink(res.confirmationUrl);
+        showAlert('Перейдите по ссылке для завершения оплаты');
         onClose();
       } else {
-        showAlert(data.message || 'Заказ создан');
+        showAlert(res.message || 'Заказ сформирован');
         onClose();
       }
     } catch (e) {

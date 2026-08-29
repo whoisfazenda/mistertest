@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, ShieldAlert, ChevronRight, Zap, RefreshCw, Trash2, Smartphone } from 'lucide-react';
+import { RefreshCw, Trash2, Smartphone, Plus, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { formatRub } from '../../lib/format';
 import { haptic, hapticNotify, showAlert } from '../../lib/telegram';
@@ -20,7 +20,6 @@ export function ModernHomeScreen({ onNavigateTab }: ModernHomeScreenProps) {
   const [topupOpen, setTopupOpen] = useState(false);
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeBanner] = useState(0);
 
   const balance = Number(user?.balance ?? 0);
   const hasSub = Boolean(subscription?.isActive);
@@ -49,148 +48,112 @@ export function ModernHomeScreen({ onNavigateTab }: ModernHomeScreenProps) {
     }
   };
 
-  const banners = [
-    {
-      icon: '🌍',
-      title: 'Неограниченная скорость до 10 Гбит/с',
-      desc: 'Подключайтесь через ультрасовременные протоколы VLESS и Shadowsocks.',
-    },
-    {
-      icon: '🛡️',
-      title: 'Полная анонимность без логов',
-      desc: 'Ваш реальный IP-адрес и история посещений надежно зашифрованы.',
-    },
-  ];
-
   return (
-    <div className="space-y-5 pb-24 select-none">
-      {/* 1. TOP BRAND & USER ROW */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-white to-zinc-400 text-black font-black text-lg shadow-lg">
-            M
-          </div>
-          <div>
-            <div className="text-sm font-extrabold text-white tracking-tight flex items-center gap-1.5">
-              <span>{user?.firstName || 'Mister User'}</span>
-              {user?.isAdmin && <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded font-mono">ADMIN</span>}
-            </div>
-            <div className="text-xs text-txt3 font-medium">@{user?.username || 'user'}</div>
-          </div>
-        </div>
+    <div className="space-y-4 pb-24 select-none max-w-xl mx-auto">
+      {/* 1. Centerpiece Balance Block matching screenshot 1 */}
+      <div className="flex flex-col items-center justify-center text-center pt-2">
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="inline-flex items-center gap-1.5 rounded-full bg-white/70 backdrop-blur-md px-3.5 py-1 text-xs font-semibold text-[#0f172a] shadow-xs hover:bg-white transition-all"
+        >
+          <RefreshCw size={13} className={`text-[#64748b] ${refreshing ? 'animate-spin' : ''}`} />
+          <span>Ваш баланс</span>
+        </button>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-txt2 hover:text-white"
-          >
-            <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-          </button>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-bold text-txt2">
-            <Zap size={12} className="text-amber-400" />
-            <span>10 Gbps</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. BIG BALANCE CENTERPIECE */}
-      <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.01] p-6 text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-bold text-txt3 uppercase tracking-wider">
-          <span>💳 Ваш баланс</span>
-        </div>
-
-        <div className="my-2 font-mono text-4xl sm:text-5xl font-black tracking-tight text-white">
+        <div className="my-1 font-mono text-5xl font-black tracking-tight text-[#0f172a]">
           {formatRub(balance)}
         </div>
 
         {/* Sub Info Row */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-txt3">
-          <span className="rounded-xl bg-white/[0.04] px-2.5 py-1 border border-white/5">
-            Тариф: {subscription?.planName || 'Без подписки'}
-          </span>
-          <span className="rounded-xl bg-white/[0.04] px-2.5 py-1 border border-white/5">
-            Устройств: {devices.length} / {subscription?.devicesMax || 5}
-          </span>
-          <span className={`rounded-xl px-2.5 py-1 border font-bold ${hasSub ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'}`}>
-            {hasSub ? '● Активна' : '○ Приостановлена'}
+        <div className="flex items-center justify-center gap-3 text-xs text-[#64748b]">
+          <span>Тариф: {subscription?.planName || '0 ₽ / день'}</span>
+          <span>Устройств: {devices.length}</span>
+          <span className={hasSub ? 'text-emerald-600 font-medium' : 'text-rose-500 font-medium'}>
+            {hasSub ? 'Подписка активна' : 'Подписка приостановлена'}
           </span>
         </div>
       </div>
 
-      {/* 3. 3D QUICK ACTION BUTTONS */}
-      <div className="grid grid-cols-3 gap-2.5">
-        {/* Top up */}
+      {/* 2. 3D Quick Action Icons matching screenshot 1 */}
+      <div className="flex items-center justify-center gap-6 py-2">
+        {/* Пополнить */}
         <button
           type="button"
           onClick={() => {
             haptic('medium');
             setTopupOpen(true);
           }}
-          className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] active:scale-95 transition-all shadow-lg group"
+          className="flex flex-col items-center group active:scale-95 transition-transform"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-2xl shadow-md group-hover:scale-105 transition-transform">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-3xl shadow-md group-hover:scale-105 transition-transform">
             👛
           </div>
-          <span className="mt-2 text-xs font-bold text-white">Пополнить</span>
+          <span className="mt-1.5 text-xs font-bold text-[#0f172a]">Пополнить</span>
         </button>
 
-        {/* Setup / Connect */}
+        {/* Установить */}
         <button
           type="button"
           onClick={() => {
             haptic('medium');
             setDeviceModalOpen(true);
           }}
-          className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] active:scale-95 transition-all shadow-lg group"
+          className="flex flex-col items-center group active:scale-95 transition-transform"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-sky-400 text-2xl shadow-md group-hover:scale-105 transition-transform">
-            💻
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#1e293b] to-[#0f172a] text-3xl shadow-md group-hover:scale-105 transition-transform">
+            🖥️
           </div>
-          <span className="mt-2 text-xs font-bold text-white">Установить</span>
+          <span className="mt-1.5 text-xs font-bold text-[#0f172a]">Установить</span>
         </button>
 
-        {/* History / Transactions */}
+        {/* История */}
         <button
           type="button"
           onClick={() => {
             haptic('medium');
             onNavigateTab('history');
           }}
-          className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] active:scale-95 transition-all shadow-lg group"
+          className="flex flex-col items-center group active:scale-95 transition-transform"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-zinc-600 to-zinc-400 text-2xl shadow-md group-hover:scale-105 transition-transform">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-white to-[#f1f5f9] text-3xl shadow-md group-hover:scale-105 transition-transform border border-white">
             🧾
           </div>
-          <span className="mt-2 text-xs font-bold text-white">История</span>
+          <span className="mt-1.5 text-xs font-bold text-[#0f172a]">История</span>
         </button>
       </div>
 
-      {/* 4. NOTIFICATION / PROMO BANNER */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      {/* 3. Notification Banner matching screenshot 1 */}
+      <div className="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-md p-4 shadow-sm border border-white/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{banners[activeBanner].icon}</span>
+            <span className="text-2xl">🌍</span>
             <div>
-              <div className="text-xs font-bold text-white">{banners[activeBanner].title}</div>
-              <div className="text-[11px] text-txt3 line-clamp-1">{banners[activeBanner].desc}</div>
+              <div className="text-xs font-bold text-[#0f172a]">Заполните контактные данные</div>
+              <div className="text-[11px] text-[#64748b]">Чтобы не терять нас и получить доступ к личному кабинету на нашем сайте</div>
             </div>
           </div>
-          <ChevronRight size={16} className="text-txt3" />
+          <div className="flex flex-col items-end gap-1">
+            <ChevronRight size={16} className="text-[#94a3b8]" />
+            <div className="flex gap-1 text-[8px] text-[#94a3b8]">
+              <span>●</span>
+              <span>○</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 5. DEVICES LIST SECTION */}
-      <div className="space-y-3">
+      {/* 4. Devices section matching screenshot 1 */}
+      <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">Устройства</h3>
+          <h3 className="text-base font-black text-[#0f172a]">Устройства</h3>
           <button
             type="button"
             onClick={() => {
               haptic('medium');
               setDeviceModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white font-bold text-black text-xs shadow-md active:scale-95 transition-transform"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#38bdf8] font-bold text-white text-xs shadow-sm hover:bg-[#0284c7] active:scale-95 transition-all"
           >
             <Plus size={14} />
             <span>Добавить</span>
@@ -198,32 +161,31 @@ export function ModernHomeScreen({ onNavigateTab }: ModernHomeScreenProps) {
         </div>
 
         {devices.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-white/5 bg-white/[0.02] p-8 text-center">
-            <ShieldAlert size={28} className="text-txt3 mb-2 opacity-60" />
-            <p className="text-xs font-bold text-white">Нет подключённых устройств</p>
-            <p className="text-[11px] text-txt3 mt-1">Нажмите «Добавить», чтобы настроить VPN на телефоне или ПК</p>
+          <div className="flex flex-col items-center justify-center rounded-[24px] bg-white/70 backdrop-blur-md p-8 text-center shadow-xs border border-white/60">
+            <AlertTriangle size={24} className="text-[#94a3b8] mb-2" />
+            <p className="text-xs font-bold text-[#64748b]">Нет подключённых устройств</p>
           </div>
         ) : (
           <div className="space-y-2">
             {devices.map((d) => (
               <div
                 key={d.id}
-                className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.03]"
+                className="flex items-center justify-between p-3.5 rounded-2xl bg-white/80 backdrop-blur-md shadow-xs border border-white/60"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f1f5f9] text-[#0f172a]">
                     <Smartphone size={18} />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">{d.name || d.deviceModel || 'Устройство'}</div>
-                    <div className="text-[10px] text-txt3 font-mono">IP: {d.ip || 'Недавно'}</div>
+                    <div className="text-xs font-bold text-[#0f172a]">{d.name || d.deviceModel || 'Устройство'}</div>
+                    <div className="text-[10px] text-[#64748b] font-mono">IP: {d.ip || 'Недавно'}</div>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => handleDeleteDevice(d.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/20"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -233,7 +195,6 @@ export function ModernHomeScreen({ onNavigateTab }: ModernHomeScreenProps) {
         )}
       </div>
 
-      {/* Modals */}
       <ModernTopupModal isOpen={topupOpen} onClose={() => setTopupOpen(false)} />
       <ModernDeviceModal isOpen={deviceModalOpen} onClose={() => setDeviceModalOpen(false)} />
     </div>

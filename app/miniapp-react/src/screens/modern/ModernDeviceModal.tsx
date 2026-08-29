@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { X, ArrowRight, Smartphone, Monitor, Tv, Laptop, Copy, ExternalLink } from 'lucide-react';
+import { X, Smartphone, Monitor, Tv, Laptop, Copy, ExternalLink } from 'lucide-react';
 import { haptic, hapticNotify, showAlert } from '../../lib/telegram';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -36,9 +36,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'happ://add/sub?url=',
         downloadUrl: 'https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973',
         instructions: [
-          'Установите бесплатное приложение Happ из App Store.',
-          'Нажмите кнопку «Импортировать в Happ» ниже.',
-          'В приложении Happ нажмите круглую кнопку для включения защиты.',
+          '1. Установите бесплатное приложение Happ из App Store.',
+          '2. Нажмите кнопку «Импортировать в Happ» ниже.',
+          '3. В приложении Happ нажмите кнопку для включения защиты.',
         ],
       },
       {
@@ -46,9 +46,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'incy://sub?url=',
         downloadUrl: 'https://apps.apple.com/app/incy/id6756943388',
         instructions: [
-          'Скачайте Incy из App Store.',
-          'Скопируйте вашу ссылку подписки и откройте Incy.',
-          'Вставьте ссылку через «+» и выберите узел.',
+          '1. Скачайте Incy из App Store.',
+          '2. Скопируйте ссылку подписки и откройте Incy.',
+          '3. Вставьте ссылку через «+» и выберите узел.',
         ],
       },
       {
@@ -56,9 +56,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'v2raytun://import/',
         downloadUrl: 'https://apps.apple.com/us/app/v2raytun/id6476628951',
         instructions: [
-          'Установите V2RayTun из App Store.',
-          'Импортируйте подписку по ссылке или QR-коду.',
-          'Включите туннель.',
+          '1. Установите V2RayTun из App Store.',
+          '2. Импортируйте подписку по ссылке или QR-коду.',
+          '3. Включите туннель.',
         ],
       },
     ],
@@ -74,9 +74,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'happ://add/sub?url=',
         downloadUrl: 'https://play.google.com/store/search?q=happ&c=apps&hl=ru',
         instructions: [
-          'Скачайте Happ из Google Play.',
-          'Нажмите кнопку «Импортировать в Happ».',
-          'Разрешите подключение VPN и нажмите Пуск.',
+          '1. Скачайте Happ из Google Play.',
+          '2. Нажмите кнопку «Импортировать в Happ».',
+          '3. Разрешите подключение VPN и нажмите Пуск.',
         ],
       },
       {
@@ -84,8 +84,8 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'incy://sub?url=',
         downloadUrl: 'https://play.google.com/store/apps/details?id=llc.itdev.incy',
         instructions: [
-          'Установите Incy из Google Play.',
-          'Добавьте ссылку подписки и активируйте защиту.',
+          '1. Установите Incy из Google Play.',
+          '2. Добавьте ссылку подписки и активируйте защиту.',
         ],
       },
     ],
@@ -101,9 +101,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'happ://add/sub?url=',
         downloadUrl: 'https://www.happ.su/main/ru',
         instructions: [
-          'Скачайте клиент Happ для Mac с официального сайта.',
-          'Скопируйте ссылку подписки и вставьте в приложение.',
-          'Подключитесь к серверу.',
+          '1. Скачайте клиент Happ для Mac с официального сайта.',
+          '2. Скопируйте ссылку подписки и вставьте в приложение.',
+          '3. Подключитесь к серверу.',
         ],
       },
     ],
@@ -119,9 +119,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'happ://add/sub?url=',
         downloadUrl: 'https://www.happ.su/main/ru',
         instructions: [
-          'Установите Happ Desktop для Windows.',
-          'Добавьте подписку по скопированной ссылке.',
-          'Включите системный прокси/VPN.',
+          '1. Установите Happ Desktop для Windows.',
+          '2. Добавьте подписку по скопированной ссылке.',
+          '3. Включите системный прокси/VPN.',
         ],
       },
     ],
@@ -137,9 +137,9 @@ const PLATFORMS: PlatformInfo[] = [
         scheme: 'karing://install-config?url=',
         downloadUrl: 'https://github.com/KaringX/karing/releases',
         instructions: [
-          'Установите Karing на ваш Smart TV.',
-          'Отсканируйте QR-код подписки с экрана телефона.',
-          'Наслаждайтесь просмотром YouTube 4K без замедлений.',
+          '1. Установите Karing на ваш Smart TV.',
+          '2. Отсканируйте QR-код подписки с экрана телефона.',
+          '3. Наслаждайтесь просмотром YouTube 4K без замедлений.',
         ],
       },
     ],
@@ -162,7 +162,7 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
     try {
       await navigator.clipboard.writeText(subUrl);
       hapticNotify('success');
-      showAlert('✅ Ссылка подписки скопирована в буфер!');
+      showAlert('✅ Ссылка подписки скопирована!');
     } catch {
       showAlert(subUrl);
     }
@@ -175,12 +175,6 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
     setTimeout(() => {
       handleCopySub();
     }, 400);
-  };
-
-  const handleNext = () => {
-    haptic('medium');
-    setSelectedAppIndex(0);
-    setStep('guide');
   };
 
   const handleReset = () => {
@@ -197,7 +191,7 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleReset}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
           />
 
           <motion.div
@@ -205,23 +199,23 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="relative z-10 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] border border-white/15 bg-[#0a0a0f] p-6 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="relative z-10 w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white p-6 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto text-[#0f172a]"
           >
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <h3 className="text-base font-bold text-white">
+            <div className="flex items-center justify-between pb-3">
+              <h3 className="text-base font-black text-[#0f172a] text-center flex-1">
                 {step === 'select' ? 'Выберите тип вашего устройства' : `Настройка: ${currentPlatform.name}`}
               </h3>
               <button
                 type="button"
                 onClick={handleReset}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:text-white"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f1f5f9] text-[#64748b] hover:text-[#0f172a]"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
             {step === 'select' ? (
-              <div className="py-4 space-y-2.5">
+              <div className="py-2 space-y-2">
                 {PLATFORMS.map((plat) => {
                   const isSelected = plat.id === selectedPlatform;
                   const Icon = plat.icon;
@@ -234,22 +228,19 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
                       }}
                       className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
                         isSelected
-                          ? 'border-white/40 bg-white/[0.1] shadow-lg shadow-white/[0.03]'
-                          : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05]'
+                          ? 'border-[#38bdf8] bg-[#f0f9ff] shadow-sm'
+                          : 'border-transparent bg-[#f8fafc] hover:bg-[#f1f5f9]'
                       }`}
                     >
                       <div className="flex items-center gap-3.5">
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isSelected ? 'bg-white text-black' : 'bg-white/10 text-white'}`}>
-                          <Icon size={20} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#0f172a] shadow-xs">
+                          <Icon size={18} />
                         </div>
-                        <div>
-                          <div className="text-xs font-bold text-white">{plat.name}</div>
-                          <div className="text-[11px] text-txt3">{plat.sub}</div>
-                        </div>
+                        <div className="text-xs font-bold text-[#0f172a]">{plat.name}</div>
                       </div>
 
-                      <div className={`flex h-5 w-5 items-center justify-center rounded-full border ${isSelected ? 'border-white bg-white' : 'border-white/20'}`}>
-                        {isSelected && <div className="h-2 w-2 rounded-full bg-black" />}
+                      <div className={`flex h-5 w-5 items-center justify-center rounded-full border ${isSelected ? 'border-[#38bdf8] bg-[#38bdf8]' : 'border-[#cbd5e1] bg-white'}`}>
+                        {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
                       </div>
                     </div>
                   );
@@ -257,17 +248,19 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
 
                 <button
                   type="button"
-                  onClick={handleNext}
-                  className="mt-4 flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-white to-zinc-300 font-bold text-black text-sm shadow-xl active:scale-98 transition-transform"
+                  onClick={() => {
+                    haptic('medium');
+                    setStep('guide');
+                  }}
+                  className="mt-4 flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-[#38bdf8] font-bold text-white text-sm shadow-md active:scale-98 transition-transform"
                 >
                   <span>Далее</span>
-                  <ArrowRight size={16} />
                 </button>
               </div>
             ) : (
-              <div className="py-4 space-y-4">
+              <div className="py-2 space-y-4">
                 {currentPlatform.apps.length > 1 && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 bg-[#f1f5f9] p-1 rounded-xl">
                     {currentPlatform.apps.map((app, idx) => (
                       <button
                         key={app.name}
@@ -276,10 +269,10 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
                           haptic('light');
                           setSelectedAppIndex(idx);
                         }}
-                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           idx === selectedAppIndex
-                            ? 'bg-white text-black border-white'
-                            : 'bg-white/5 text-txt2 border-white/10 hover:bg-white/10'
+                            ? 'bg-white text-[#0f172a] shadow-sm'
+                            : 'text-[#64748b] hover:text-[#0f172a]'
                         }`}
                       >
                         {app.name}
@@ -288,24 +281,20 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
                   </div>
                 )}
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2.5">
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
-                    <span>Инструкция по подключению</span>
-                  </div>
-                  <ol className="space-y-2 text-[12px] text-txt2 list-decimal list-inside leading-relaxed">
+                <div className="rounded-2xl bg-[#f8fafc] p-4 space-y-2 border border-[#f1f5f9]">
+                  <div className="text-xs font-bold text-[#0f172a]">Инструкция по подключению:</div>
+                  <div className="space-y-1.5 text-xs text-[#475569] leading-relaxed">
                     {currentApp.instructions.map((ins, i) => (
-                      <li key={i} className="text-zinc-300">
-                        {ins}
-                      </li>
+                      <div key={i}>{ins}</div>
                     ))}
-                  </ol>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
                   <button
                     type="button"
                     onClick={handleOpenApp}
-                    className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-white font-bold text-black text-xs shadow-lg active:scale-98 transition-transform"
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#38bdf8] font-bold text-white text-xs shadow-md active:scale-98 transition-transform"
                   >
                     <span>🚀 Открыть {currentApp.name}</span>
                   </button>
@@ -314,7 +303,7 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
                     href={currentApp.downloadUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/5 font-bold text-white text-xs hover:bg-white/10 active:scale-98 transition-transform"
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#f1f5f9] font-bold text-[#0f172a] text-xs hover:bg-[#e2e8f0] active:scale-98 transition-transform"
                   >
                     <ExternalLink size={14} />
                     <span>Скачать</span>
@@ -324,7 +313,7 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
                 <button
                   type="button"
                   onClick={handleCopySub}
-                  className="flex w-full h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-xs font-semibold text-txt2 hover:text-white"
+                  className="flex w-full h-11 items-center justify-center gap-2 rounded-xl bg-[#f1f5f9] text-xs font-bold text-[#0f172a] hover:bg-[#e2e8f0]"
                 >
                   <Copy size={14} />
                   <span>Скопировать ключ подписки</span>
@@ -333,7 +322,7 @@ export function ModernDeviceModal({ isOpen, onClose }: ModernDeviceModalProps) {
                 <button
                   type="button"
                   onClick={() => setStep('select')}
-                  className="w-full text-center text-xs font-semibold text-txt3 hover:text-white py-1"
+                  className="w-full text-center text-xs font-semibold text-[#64748b] hover:text-[#0f172a] py-1"
                 >
                   ← Выбрать другое устройство
                 </button>
