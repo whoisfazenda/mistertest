@@ -440,10 +440,14 @@ class OrderService:
 
     async def _apply_to_existing(self, order: Order, data: dict[str, Any]) -> ProvisionOutcome:
         sub = await self.subs.get_by_uuid(order.subscription_uuid)
-        if sub is not None and data:
+        if sub is not None:
             sub_service = SubscriptionService(self.session, self.client)
-            sub_service.apply_status_payload(sub, data)
-            await self.session.flush()
+            try:
+                await sub_service.refresh_from_api(sub)
+            except Exception:
+                if data:
+                    sub_service.apply_status_payload(sub, data)
+                    await self.session.flush()
         await self.orders.mark_completed(order, order.subscription_uuid)
         return ProvisionOutcome(order, provisioned=True, subscription=sub)
 

@@ -123,7 +123,7 @@ class SubscriptionService:
 
         t_limit = _first(inner, "traffic_limit_bytes", "traffic_bytes", "data_limit_bytes")
         if t_limit is None:
-            t_limit_gb = _first(inner, "traffic_limit_gb", "traffic_gb", "data_limit_gb")
+            t_limit_gb = _first(inner, "traffic_limit_gb", "traffic_gb", "data_limit_gb", "traffic_limit", "traffic")
             if t_limit_gb is not None:
                 try:
                     t_limit = int(float(t_limit_gb) * (1024 ** 3))
@@ -131,7 +131,11 @@ class SubscriptionService:
                     t_limit = None
         if t_limit is not None:
             try:
-                sub.traffic_limit_bytes = int(t_limit)
+                val = float(t_limit)
+                if 0 < val < 10000:
+                    sub.traffic_limit_bytes = int(val * (1024 ** 3))
+                else:
+                    sub.traffic_limit_bytes = int(val)
             except (TypeError, ValueError):
                 pass
 
@@ -145,7 +149,11 @@ class SubscriptionService:
                     t_used = None
         if t_used is not None:
             try:
-                sub.traffic_used_bytes = int(t_used)
+                val_used = float(t_used)
+                if 0 < val_used < 10000:
+                    sub.traffic_used_bytes = int(val_used * (1024 ** 3))
+                else:
+                    sub.traffic_used_bytes = int(val_used)
             except (TypeError, ValueError):
                 pass
 

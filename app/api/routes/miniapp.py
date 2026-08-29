@@ -414,8 +414,12 @@ async def miniapp_bootstrap(
     sub = await SubscriptionRepository(session).get_active_for_user(user.id)
     devices: list[dict[str, Any]] = []
     if sub is not None:
+        service = SubscriptionService(session, request.app.state.adaptgroup_client)
         try:
-            service = SubscriptionService(session, request.app.state.adaptgroup_client)
+            await asyncio.wait_for(service.refresh_from_api(sub), timeout=3.5)
+        except Exception as exc:
+            logger.warning("Failed to refresh status for sub %s: %s", sub.subscription_uuid, exc)
+        try:
             raw_devices = await asyncio.wait_for(service.get_devices(sub), timeout=3.5)
             devices = raw_devices if isinstance(raw_devices, list) else []
         except Exception as exc:
