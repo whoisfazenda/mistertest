@@ -47,7 +47,11 @@ from app.services.admin_operations import has_scope, is_admin_role, write_audit
 from app.services.orders import OrderService
 from app.services.payments.factory import get_payment_provider
 from app.services.plans import PlanService
-from app.services.subscriptions import SubscriptionService, public_subscription_url
+from app.services.subscriptions import (
+    SubscriptionService,
+    public_subscription_url,
+    upstream_subscription_url,
+)
 from app.utils.idempotency import new_uuid
 
 logger = get_logger(__name__)

@@ -1,15 +1,14 @@
 import { useState, useRef } from 'react';
-import { Home, Users, User as UserIcon, Shield, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Home, User as UserIcon, Shield, HelpCircle, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { haptic } from '../../lib/telegram';
 import { ModernHomeScreen } from './ModernHomeScreen';
-import { ModernReferralScreen } from './ModernReferralScreen';
 import { ModernProfileScreen } from './ModernProfileScreen';
 import AdminScreen from '../AdminScreen';
 import HistoryScreen from '../HistoryScreen';
 
 export function ModernAppLayout() {
-  const [activeTab, setActiveTab] = useState<'home' | 'referral' | 'profile' | 'admin' | 'history'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'admin' | 'history'>('home');
   const user = useAppStore((s) => s.user);
   const config = useAppStore((s) => s.config);
   const isAdmin = Boolean(user?.isAdmin);
@@ -19,7 +18,6 @@ export function ModernAppLayout() {
 
   const navItems = [
     { id: 'home', label: 'Главная', icon: Home },
-    { id: 'referral', label: 'Заработок', icon: Users },
     { id: 'profile', label: 'Профиль', icon: UserIcon },
     ...(isAdmin ? [{ id: 'admin', label: 'Админка', icon: Shield }] : []),
   ];
@@ -76,7 +74,6 @@ export function ModernAppLayout() {
           <nav className="space-y-2">
             {[
               { id: 'home', label: 'Главная', icon: Home },
-              { id: 'referral', label: 'Заработок', icon: Users },
               { id: 'profile', label: 'Профиль', icon: UserIcon },
               ...(isAdmin ? [{ id: 'admin', label: 'Админка', icon: Shield }] : []),
             ].map((item) => {
@@ -130,7 +127,6 @@ export function ModernAppLayout() {
         )}
 
         {activeTab === 'home' && <ModernHomeScreen onNavigateTab={handleTabChange} />}
-        {activeTab === 'referral' && <ModernReferralScreen />}
         {activeTab === 'profile' && <ModernProfileScreen onNavigateTab={handleTabChange} />}
         {activeTab === 'admin' && <AdminScreen />}
       </main>

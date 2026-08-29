@@ -5,9 +5,7 @@ import {
   History,
   LifeBuoy,
   Plus,
-  Share2,
   Tag,
-  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +17,7 @@ import { Screen } from '../components/Screen';
 import { TopupModal } from '../components/TopupModal';
 import { PromoModal } from '../components/PromoModal';
 import { staggerItem } from '../lib/format';
-import { haptic, hapticNotify, openLink, showAlert } from '../lib/telegram';
+import { haptic, openLink } from '../lib/telegram';
 import { useAppStore } from '../store/useAppStore';
 
 export default function ProfileScreen() {
@@ -31,34 +29,12 @@ export default function ProfileScreen() {
   const [topupOpen, setTopupOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
 
-  const botUsername = 'misterfvpn_bot';
-  const referralLink = `https://t.me/${botUsername}?start=ref_${user?.telegramId || ''}`;
-
-  const copyReferralLink = async () => {
-    try {
-      await navigator.clipboard.writeText(referralLink);
-      hapticNotify('success');
-      showAlert('✅ Реферальная ссылка скопирована в буфер обмена');
-    } catch {
-      prompt('Ваша реферальная ссылка:', referralLink);
-    }
-  };
-
-  const shareReferralLink = () => {
-    haptic('light');
-    const shareText = encodeURIComponent(
-      'Попробуй быстрый и надежный Mister VPN с бесплатным пробным периодом на 7 дней!',
-    );
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${shareText}`;
-    openLink(shareUrl);
-  };
-
   const openSupport = () => {
     haptic('light');
     if (config?.supportUrl) {
       openLink(config.supportUrl);
     } else {
-      openLink(`https://t.me/${botUsername}`);
+      openLink('https://t.me/misterfvpn_bot');
     }
   };
 
@@ -150,57 +126,6 @@ export default function ProfileScreen() {
               </GlassCard>
             </motion.div>
           )}
-
-          {/* Referral Program Section */}
-          <motion.div variants={staggerItem}>
-            <GlassCard className="space-y-3 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Users size={18} className="text-white" />
-                  <h4 className="font-bold text-white text-sm">Реферальная программа</h4>
-                </div>
-                <span className="text-xs font-semibold text-white">
-                  +100 ₽ за друга
-                </span>
-              </div>
-
-              <p className="text-xs text-txt2 leading-relaxed">
-                Приглашайте друзей и получайте бонусные рубли на баланс за каждую первую оплату
-              </p>
-
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
-                  <span className="text-[10px] uppercase font-semibold text-txt3">Приглашено</span>
-                  <p className="font-mono text-xl font-bold text-white mt-0.5">
-                    {user?.referrerId ? '1' : '0'} чел.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
-                  <span className="text-[10px] uppercase font-semibold text-txt3">Заработано</span>
-                  <p className="font-mono text-xl font-bold text-white mt-0.5">
-                    {user?.referralEarned || 0} ₽
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={copyReferralLink}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/[0.08]"
-                >
-                  Скопировать ссылку
-                </button>
-                <button
-                  onClick={shareReferralLink}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/20 bg-white px-4 py-2.5 text-xs font-bold text-black hover:bg-zinc-200"
-                >
-                  <Share2 size={14} />
-                  <span>Поделиться</span>
-                </button>
-              </div>
-            </GlassCard>
-          </motion.div>
 
           {/* Quick Menu Actions */}
           <motion.div variants={staggerItem}>
