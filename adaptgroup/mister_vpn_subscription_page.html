@@ -2,296 +2,301 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>{{integration_name}} — Ваша подписка</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>{{integration_name}} — Подписка</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
-      --bg: #050507;
-      --card-bg: rgba(255, 255, 255, 0.035);
+      --bg: #000000;
+      --card-bg: #0c0c11;
       --card-border: rgba(255, 255, 255, 0.08);
-      --txt-main: #f4f4f6;
-      --txt-muted: #8e8e9a;
-      --txt-dim: #5a5a68;
-      --primary-gradient: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
-      --accent-emerald: #10b981;
-      --accent-emerald-glow: rgba(16, 185, 129, 0.25);
+      --txt-main: #f8fafc;
+      --txt-muted: #94a3b8;
+      --txt-dim: #64748b;
+      --accent: #38bdf8;
+      --emerald: #10b981;
+      --red: #ef4444;
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      background: var(--bg);
+      background-color: var(--bg);
       color: var(--txt-main);
       font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 100% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 0% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 40%);
+      background-image: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
     }
     .wrap {
-      width: min(580px, 100%);
+      width: 100%;
+      max-width: 460px;
       margin: 0 auto;
-      padding: 24px 16px 48px;
+      padding: 14px 12px 36px;
     }
     .brand {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
+      padding: 0 4px;
     }
     .brand-left {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      font-size: 17px;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 16px;
       letter-spacing: -0.02em;
     }
     .logo {
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
       display: grid;
       place-items: center;
-      background: linear-gradient(135deg, #ffffff, #888888);
-      color: #050507;
+      background: linear-gradient(135deg, #ffffff, #94a3b8);
+      color: #000;
       font-weight: 900;
-      font-size: 18px;
-      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+      font-size: 15px;
       overflow: hidden;
+      box-shadow: 0 4px 14px rgba(255,255,255,0.12);
     }
     .logo img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .brand-badge {
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
+      gap: 4px;
+      padding: 3px 9px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 11.5px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 10.5px;
       font-weight: 700;
       color: var(--txt-muted);
     }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 22px;
-      margin: 14px 0;
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      border-radius: 18px;
+      padding: 14px;
+      margin: 8px 0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     }
-    .card-title {
+    .card-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
     }
-    .card-title h2 {
-      margin: 0;
-      font-size: 12px;
+    .card-title {
+      font-size: 10.5px;
       font-weight: 800;
       color: var(--txt-muted);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
     }
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: 5px;
+      padding: 3px 9px;
       border-radius: 999px;
       background: rgba(16, 185, 129, 0.12);
       border: 1px solid rgba(16, 185, 129, 0.25);
-      color: var(--accent-emerald);
+      color: var(--emerald);
       font-weight: 800;
-      font-size: 12px;
+      font-size: 11px;
     }
     .status-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--accent-emerald);
-      box-shadow: 0 0 10px var(--accent-emerald);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.2); }
+      background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
     }
     .hero-plan {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 900;
       letter-spacing: -0.02em;
-      margin: 2px 0 6px;
+      margin-bottom: 3px;
       color: #fff;
     }
     .hero-date {
-      font-size: 13.5px;
+      font-size: 11.5px;
       color: var(--txt-muted);
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 14px;
+      gap: 6px;
     }
     .stat-box {
       background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
-      padding: 13px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 9px 11px;
     }
     .stat-label {
-      font-size: 11px;
+      font-size: 9.5px;
       font-weight: 700;
       color: var(--txt-dim);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
     }
     .stat-val {
-      font-size: 15px;
+      font-size: 13.5px;
       font-weight: 800;
-      margin-top: 4px;
+      margin-top: 2px;
       color: #fff;
       font-family: "JetBrains Mono", monospace;
     }
-    .copybox {
-      background: rgba(0, 0, 0, 0.45);
+    .link-box {
+      background: rgba(0, 0, 0, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 14px;
+      border-radius: 12px;
+      padding: 9px 11px;
       word-break: break-all;
       font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
+      font-size: 11px;
       color: #cbd5e1;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       user-select: all;
+    }
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
     }
     .btn {
       width: 100%;
-      min-height: 48px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-weight: 800;
-      font-size: 13.5px;
-      cursor: pointer;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .btn:active {
-      transform: scale(0.98);
-    }
-    .btn.primary {
-      background: var(--primary-gradient);
-      color: #050507;
-      border: none;
-      box-shadow: 0 4px 24px rgba(255, 255, 255, 0.18);
-    }
-    .btn.danger {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.25);
-      color: #fca5a5;
-    }
-    .tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-    }
-    .tab {
-      flex: 1;
-      min-width: 80px;
       min-height: 40px;
-      border: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--txt-muted);
-      border-radius: 14px;
-      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
       font-weight: 800;
       font-size: 12.5px;
       cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      text-decoration: none;
     }
-    .tab.active {
-      background: #ffffff;
-      color: #050507;
-      border-color: #ffffff;
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      color: #000000;
+      border: none;
       box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
     }
-    .app-choices {
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 16px;
+      margin-top: 10px;
+    }
+    .qr-box img {
+      width: 190px !important;
+      height: 190px !important;
+      display: block;
+      border-radius: 6px;
+    }
+    .qr-note {
+      color: #475569;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .os-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 8px;
+      overflow-x: auto;
+    }
+    .os-tab {
+      flex: 1;
+      min-height: 34px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.025);
+      color: var(--txt-muted);
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 11.5px;
+      cursor: pointer;
+      white-space: nowrap;
+      padding: 0 6px;
+      transition: all 0.15s;
+    }
+    .os-tab.active {
+      background: #ffffff;
+      color: #000;
+      border-color: #fff;
+    }
+    .app-selector {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 14px;
+      gap: 5px;
+      margin-bottom: 10px;
     }
-    .app-btn {
+    .app-pill {
       border: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.025);
       color: var(--txt-muted);
-      border-radius: 14px;
-      min-height: 42px;
+      border-radius: 10px;
+      min-height: 34px;
       font-weight: 800;
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
-    .app-btn.active {
+    .app-pill.active {
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.3);
       color: #fff;
     }
-    .app-panel {
+    .app-detail {
       background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 18px;
-      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 12px;
     }
-    .app-panel h3 {
-      margin: 0 0 6px;
-      font-size: 16px;
+    .app-detail h3 {
+      font-size: 14px;
       font-weight: 800;
+      margin-bottom: 3px;
       color: #fff;
     }
-    .app-panel p {
-      margin: 0 0 12px;
-      font-size: 12px;
+    .app-detail p {
+      font-size: 11px;
       color: var(--txt-muted);
-      line-height: 1.5;
+      line-height: 1.4;
+      margin-bottom: 8px;
     }
     .steps {
-      margin: 0 0 16px;
-      padding: 0;
       list-style: none;
-      counter-reset: step;
+      margin-bottom: 10px;
     }
     .steps li {
       position: relative;
-      padding-left: 28px;
-      margin-bottom: 10px;
-      font-size: 12.5px;
-      color: #d1d5db;
-      line-height: 1.5;
+      padding-left: 22px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: #cbd5e1;
+      line-height: 1.35;
     }
     .steps li::before {
       content: counter(step);
@@ -299,67 +304,30 @@
       position: absolute;
       left: 0;
       top: 0;
-      width: 18px;
-      height: 18px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: var(--txt-muted);
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 800;
       display: grid;
       place-items: center;
-    }
-    .device-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-    }
-    .device-item:first-child {
-      border-top: none;
-      padding-top: 0;
-    }
-    .device-name {
-      font-size: 13px;
-      font-weight: 800;
-      color: #fff;
-    }
-    .device-sub {
-      font-size: 11px;
-      color: var(--txt-dim);
-      margin-top: 2px;
-      font-family: "JetBrains Mono", monospace;
-    }
-    .qr-container {
-      display: grid;
-      place-items: center;
-      padding: 16px;
-      background: #ffffff;
-      border-radius: 20px;
-      margin-top: 14px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    }
-    .qr-container img {
-      width: min(220px, 100%);
-      height: auto;
-      display: block;
-      border-radius: 8px;
     }
     .toast {
       position: fixed;
       left: 50%;
-      bottom: 24px;
+      bottom: 20px;
       transform: translateX(-50%);
-      padding: 12px 20px;
+      padding: 9px 16px;
       border-radius: 999px;
       background: #ffffff;
-      color: #050507;
+      color: #000;
       font-weight: 800;
-      font-size: 12.5px;
+      font-size: 11.5px;
       z-index: 1000;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
       animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes pop {
@@ -378,15 +346,15 @@
         </div>
         <div>{{integration_name}}</div>
       </div>
-      <div class="brand-badge">
-        <span>⚡ 10 Gbps</span>
+      <div class="badge">
+        <span>⚡ 10 Gbps Ultra</span>
       </div>
     </header>
 
     <!-- Subscription Status Card -->
     <section class="card">
-      <div class="card-title">
-        <h2>Текущая подписка</h2>
+      <div class="card-head">
+        <div class="card-title">Текущая подписка</div>
         <div class="status-pill">
           <div class="status-dot"></div>
           <span>{{sub_status}}</span>
@@ -410,37 +378,38 @@
 
     <!-- Quick Import Card -->
     <section class="card">
-      <div class="card-title">
-        <h2>Ссылка на подключение</h2>
+      <div class="card-head">
+        <div class="card-title">Ссылка на подключение</div>
       </div>
 
-      <div class="copybox" id="subUrlBox">Загрузка ссылки...</div>
+      <div class="link-box" id="subUrlBox">Загрузка ссылки...</div>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div class="btn-row">
         <button class="btn primary" onclick="copySub()">📋 Скопировать</button>
         <button class="btn" onclick="toggleQr()">📱 QR-код</button>
       </div>
 
-      <div id="qrBox" class="qr-container" style="display: none;">
-        <img id="qrImg" src="" alt="QR подписки">
+      <div id="qrBox" class="qr-box" style="display: none;">
+        <img id="qrImage" src="" alt="QR Code" />
+        <div class="qr-note">Наведите камеру в приложении Happ/Incy/Karing</div>
       </div>
     </section>
 
     <!-- Applications & Guides -->
     <section class="card">
-      <div class="card-title">
-        <h2>Настройка приложений</h2>
+      <div class="card-head">
+        <div class="card-title">Настройка приложений</div>
       </div>
 
-      <div class="tabs" id="platformTabs"></div>
-      <div class="app-choices" id="appChoices"></div>
-      <div class="app-panel" id="appPanel"></div>
+      <div class="os-tabs" id="platformTabs"></div>
+      <div class="app-selector" id="appChoices"></div>
+      <div class="app-detail" id="appPanel"></div>
     </section>
 
     <!-- Connected Devices -->
     <section class="card">
-      <div class="card-title">
-        <h2>Подключённые устройства</h2>
+      <div class="card-head">
+        <div class="card-title">Подключённые устройства</div>
       </div>
       <div>
         {{devices_list}}
@@ -453,14 +422,22 @@
     const box = document.getElementById("subUrlBox");
     if (box) box.textContent = subUrl;
 
-    const qr = document.getElementById("qrImg");
-    if (qr) qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(subUrl);
+    function initQr() {
+      const img = document.getElementById("qrImage");
+      if (img) {
+        // Fast, reliable multi-provider QR with quick fallback
+        img.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=6&data=" + encodeURIComponent(subUrl);
+        img.onerror = function() {
+          this.src = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(subUrl);
+        };
+      }
+    }
 
     async function copySub() {
       if (!subUrl) return;
       try {
         await navigator.clipboard.writeText(subUrl);
-        toast("✅ Ссылка подписки скопирована!");
+        toast("✅ Ссылка скопирована!");
       } catch (e) {
         prompt("Скопируйте ссылку подписки:", subUrl);
       }
@@ -468,7 +445,9 @@
 
     function toggleQr() {
       const q = document.getElementById("qrBox");
-      q.style.display = q.style.display === "none" ? "grid" : "none";
+      const isHidden = q.style.display === "none";
+      q.style.display = isHidden ? "flex" : "none";
+      if (isHidden) initQr();
     }
 
     function toast(text) {
@@ -476,7 +455,7 @@
       el.className = "toast";
       el.textContent = text;
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 2200);
+      setTimeout(() => el.remove(), 1800);
     }
 
     const apps = {
@@ -497,34 +476,34 @@
           {
             "name": "Incy",
             "scheme": "incy://sub?url=",
-            "lead": "Стильный и удобный клиент с поддержкой всех протоколов.",
+            "lead": "Стильный и быстрый клиент с поддержкой VLESS.",
             "download": "https://apps.apple.com/app/incy/id6756943388",
             "steps": [
               "Установите Incy из App Store.",
-              "Скопируйте ссылку подписки и откройте Incy.",
-              "Вставьте ссылку через «+» и включите защиту."
+              "Скопируйте ссылку и нажмите «Импортировать».",
+              "Включите защиту."
             ]
           },
           {
             "name": "V2RayTun",
             "scheme": "v2raytun://import/",
-            "lead": "Проверенное приложение для стабильной работы.",
+            "lead": "Надёжное приложение для стабильной работы.",
             "download": "https://apps.apple.com/us/app/v2raytun/id6476628951",
             "steps": [
               "Скачайте V2RayTun из App Store.",
-              "Импортируйте подписку по URL.",
-              "Выберите сервер и нажмите старт."
+              "Импортируйте подписку по ссылке.",
+              "Выберите локацию и нажмите старт."
             ]
           },
           {
             "name": "Karing",
             "scheme": "karing://install-config?url=",
-            "lead": "Универсальный клиент с расширенными настройками.",
+            "lead": "Универсальный клиент с расширенными функциями.",
             "download": "https://apps.apple.com/us/app/karing/id6472431552",
             "steps": [
               "Установите Karing.",
               "Добавьте профиль по скопированной ссылке.",
-              "Обновите серверы и подключитесь."
+              "Подключитесь к сети."
             ]
           }
         ]
@@ -539,8 +518,8 @@
             "download": "https://play.google.com/store/search?q=happ&c=apps&hl=ru",
             "steps": [
               "Установите Happ из Google Play.",
-              "Нажмите «Импортировать в Happ» или вставьте ссылку через «+».",
-              "Нажмите круглую кнопку включения."
+              "Нажмите «Импортировать в Happ» или добавьте через «+».",
+              "Включите подключение."
             ]
           },
           {
@@ -549,118 +528,148 @@
             "lead": "Быстрый Android-клиент без рекламы.",
             "download": "https://play.google.com/store/apps/details?id=llc.itdev.incy",
             "steps": [
-              "Скачайте Incy из Google Play.",
-              "Нажмите добавить подписку и вставьте URL.",
-              "Подключитесь к самому быстрому серверу."
+              "Установите Incy из Google Play.",
+              "Скопируйте ссылку и нажмите кнопку «Импорт».",
+              "Нажмите Старт."
             ]
           },
           {
             "name": "V2RayTun",
             "scheme": "v2raytun://import/",
-            "lead": "Классический проверенный клиент.",
+            "lead": "Удобный и проверенный клиент.",
             "download": "https://play.google.com/store/apps/details?id=com.v2raytun.android",
             "steps": [
-              "Установите V2RayTun.",
-              "Нажмите «+» и выберите «Импорт из буфера».",
-              "Включите VPN переключателем."
+              "Установите V2RayTun из Google Play.",
+              "Нажмите «Импортировать по ссылке».",
+              "Нажмите кнопку подключения."
             ]
           },
           {
             "name": "Karing",
             "scheme": "karing://install-config?url=",
-            "lead": "Мощный клиент с поддержкой обхода блокировок.",
-            "download": "https://github.com/KaringX/karing/releases",
+            "lead": "Мощный клиент с гибкими маршрутами.",
+            "download": "https://play.google.com/store/apps/details?id=com.karing.app",
             "steps": [
-              "Скачайте APK с официального GitHub.",
-              "Импортируйте ссылку подписки.",
-              "Запустите соединение."
+              "Установите Karing.",
+              "Импортируйте подписку по URL.",
+              "Подключитесь."
             ]
           }
         ]
       },
-      "pc": {
+      "desktop": {
         "label": "Windows / Mac 💻",
         "items": [
           {
-            "name": "Happ Desktop",
+            "name": "Happ",
             "scheme": "happ://add/sub?url=",
-            "lead": "Приложение для Windows, macOS и Linux.",
-            "download": "https://www.happ.su/main/ru",
+            "lead": "Десктопная версия Happ для ПК и ноутбуков.",
+            "download": "https://github.com/happ-proxy/happ/releases",
             "steps": [
-              "Скачайте клиент с официального сайта happ.su.",
-              "Скопируйте ссылку подписки на этой странице.",
-              "Вставьте ссылку в приложение и нажмите Подключить."
+              "Скачайте и установите Happ для вашей ОС.",
+              "Нажмите «Импортировать» или вставьте ссылку подписки.",
+              "Выберите сервер и включите системный прокси."
             ]
           },
           {
-            "name": "Incy PC",
-            "scheme": "incy://sub?url=",
-            "lead": "Легковесный клиент для компьютеров.",
-            "download": "https://github.com/INCY-DEV/incy-platforms/releases",
+            "name": "Hiddify",
+            "scheme": "hiddify://install-sub?url=",
+            "lead": "Кроссплатформенный клиент с поддержкой всех современных протоколов.",
+            "download": "https://github.com/hiddify/hiddify-next/releases",
             "steps": [
-              "Скачайте сборку для вашей ОС с GitHub.",
-              "Добавьте подписку по URL.",
-              "Включите системный прокси/VPN."
+              "Установите Hiddify для Windows или macOS.",
+              "Нажмите «Новый профиль» -> «Добавить из буфера».",
+              "Нажмите большую кнопку подключения."
             ]
           },
           {
-            "name": "Karing Desktop",
+            "name": "Karing",
             "scheme": "karing://install-config?url=",
-            "lead": "Кроссплатформенный клиент для Windows и Mac.",
+            "lead": "Отличный клиент для macOS и Windows с автозапуском.",
             "download": "https://github.com/KaringX/karing/releases",
             "steps": [
-              "Установите Karing для вашей системы.",
-              "Импортируйте URL профиля.",
-              "Выберите сервер и нажмите Старт."
+              "Скачайте Karing с GitHub.",
+              "Добавьте подписку по ссылке.",
+              "Включите режим VPN."
             ]
           },
           {
-            "name": "V2RayTun PC",
-            "scheme": "v2raytun://import/",
-            "lead": "Стабильный клиент для Windows.",
-            "download": "https://github.com/DigneZzZ/v2raytun/releases",
+            "name": "v2rayN",
+            "scheme": "",
+            "lead": "Классический инструмент для Windows.",
+            "download": "https://github.com/2dust/v2rayN/releases",
             "steps": [
-              "Скачайте exe-файл с релизов GitHub.",
-              "Вставьте скопированную ссылку.",
-              "Активируйте туннель."
+              "Скачайте v2rayN-With-Core.zip и распакуйте.",
+              "Серверы -> Добавить подписку -> Вставьте ссылку.",
+              "Нажмите Обновить подписку и включите Tun Mode."
             ]
           }
         ]
       }
     };
 
-    let currentPlatform = "iphone";
-    let currentApp = 0;
+    let activeOs = "iphone";
+    let activeAppIdx = 0;
 
-    function renderApps() {
-      const platform = apps[currentPlatform];
-      const platformTabs = document.getElementById("platformTabs");
-      const appChoices = document.getElementById("appChoices");
+    function renderOsTabs() {
+      const tabs = document.getElementById("platformTabs");
+      if (!tabs) return;
+      tabs.innerHTML = Object.keys(apps).map(os => `
+        <button class="os-tab ${os === activeOs ? 'active' : ''}" onclick="switchOs('${os}')">
+          ${apps[os].label}
+        </button>
+      `).join('');
+    }
+
+    function renderAppChoices() {
+      const choices = document.getElementById("appChoices");
+      if (!choices) return;
+      const curApps = apps[activeOs].items;
+      choices.innerHTML = curApps.map((item, idx) => `
+        <button class="app-pill ${idx === activeAppIdx ? 'active' : ''}" onclick="switchApp(${idx})">
+          ${item.name}
+        </button>
+      `).join('');
+    }
+
+    function renderAppDetail() {
       const panel = document.getElementById("appPanel");
-
-      platformTabs.innerHTML = Object.entries(apps).map(([key, value]) =>
-        `<button class="tab ${key === currentPlatform ? "active" : ""}" onclick="currentPlatform='${key}';currentApp=0;renderApps()">${value.label}</button>`
-      ).join("");
-
-      appChoices.innerHTML = platform.items.map((item, index) =>
-        `<button class="app-btn ${index === currentApp ? "active" : ""}" onclick="currentApp=${index};renderApps()">${item.name}</button>`
-      ).join("");
-
-      const app = platform.items[currentApp] || platform.items[0];
-      const launchUrl = app.scheme + encodeURIComponent(subUrl);
+      if (!panel) return;
+      const cur = apps[activeOs].items[activeAppIdx];
+      const encodedSub = encodeURIComponent(subUrl);
+      const deepLink = cur.scheme ? cur.scheme + (cur.scheme.endsWith("/") ? subUrl : encodedSub) : "";
 
       panel.innerHTML = `
-        <h3>${app.name}</h3>
-        <p>${app.lead}</p>
-        <ol class="steps">${app.steps.map(step => `<li>${step}</li>`).join("")}</ol>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <a class="btn primary" href="${launchUrl}" onclick="setTimeout(copySub, 500)">🚀 Открыть в ${app.name}</a>
-          <a class="btn" href="${app.download}" target="_blank" rel="noopener">📥 Скачать клиент</a>
+        <h3>${cur.name}</h3>
+        <p>${cur.lead}</p>
+        <ol class="steps" style="counter-reset: step;">
+          ${cur.steps.map(s => `<li>${s}</li>`).join('')}
+        </ol>
+        <div class="btn-row" style="margin-top: 10px;">
+          ${deepLink ? `<a href="${deepLink}" class="btn primary">🚀 Открыть в ${cur.name}</a>` : `<button class="btn primary" onclick="copySub()">📋 Скопировать ссылку</button>`}
+          ${cur.download ? `<a href="${cur.download}" target="_blank" rel="noopener" class="btn">📥 Скачать</a>` : ''}
         </div>
       `;
     }
 
-    renderApps();
+    function switchOs(os) {
+      activeOs = os;
+      activeAppIdx = 0;
+      renderOsTabs();
+      renderAppChoices();
+      renderAppDetail();
+    }
+
+    function switchApp(idx) {
+      activeAppIdx = idx;
+      renderAppChoices();
+      renderAppDetail();
+    }
+
+    renderOsTabs();
+    renderAppChoices();
+    renderAppDetail();
+    initQr();
   </script>
 </body>
 </html>
