@@ -17,30 +17,52 @@ import AdminScreen from './screens/AdminScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import PlanDetailScreen from './screens/PlanDetailScreen';
 import SupportScreen from './screens/SupportScreen';
+import { ModernAppLayout } from './screens/modern/ModernAppLayout';
 
 export default function App() {
   const location = useLocation();
   const bootstrap = useAppStore((s) => s.bootstrap);
   const user = useAppStore((s) => s.user);
+  const config = useAppStore((s) => s.config);
   const bootstrapError = useAppStore((s) => s.bootstrapError);
   const isAdmin = Boolean(user?.isAdmin);
   const mainTab = isMainTabPath(location.pathname, isAdmin);
+  const isModern = config?.appThemeStyle === 'modern';
 
   useEffect(() => {
     initTelegram();
     void bootstrap();
   }, [bootstrap]);
 
-  const home = bootstrapError ? (
-    <BootError message={bootstrapError} onRetry={() => void bootstrap()} />
-  ) : !user ? (
-    <BootSkeleton />
-  ) : (
-    <HomeScreen />
-  );
+  if (bootstrapError) {
+    return <BootError message={bootstrapError} onRetry={() => void bootstrap()} />;
+  }
+
+  if (!user) {
+    return <BootSkeleton />;
+  }
+
+  if (isModern) {
+    return (
+      <>
+        {/* Background character watermark */}
+        <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden">
+          <img
+            src="/miniapp/static/mister-character.png"
+            alt=""
+            className="h-full max-h-[88vh] w-auto max-w-[95vw] object-contain opacity-[0.16] filter grayscale select-none"
+            loading="eager"
+          />
+        </div>
+        <div className="relative z-10 mx-auto min-h-dvh w-full px-2 sm:px-4 pt-safe pb-safe">
+          <ModernAppLayout />
+        </div>
+      </>
+    );
+  }
 
   const mainPages = [
-    home,
+    <HomeScreen key="home" />,
     <PricingScreen key="pricing" />,
     <DevicesScreen key="devices" />,
     <ProfileScreen key="profile" />,

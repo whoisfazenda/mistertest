@@ -164,8 +164,8 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
             >
               <QrCode size={20} className={method === 'sbp' || method === 'card' ? 'text-white' : 'text-zinc-500'} />
               <div>
-                <div className="text-xs font-bold text-white">СБП (ЮMoney)</div>
-                <div className="text-[10.5px] text-txt2">QR / Карты РФ</div>
+                <div className="text-xs font-bold text-white">СБП / Карты РФ</div>
+                <div className="text-[10.5px] text-txt2">QR СБП, Карты МИР</div>
               </div>
             </button>
 

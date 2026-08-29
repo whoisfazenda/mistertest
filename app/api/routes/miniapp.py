@@ -432,6 +432,7 @@ async def miniapp_bootstrap(
     feature_gifts = app_settings.get("feature_gifts", "true").lower() in {"1", "true", "yes", "on"}
     feature_support = app_settings.get("feature_support", "true").lower() in {"1", "true", "yes", "on"}
     feature_maintenance = app_settings.get("feature_maintenance", "false").lower() in {"1", "true", "yes", "on"}
+    app_theme_style = app_settings.get("app_theme_style") or "classic"
 
     return {
         "user": _serialize_user(user, identity),
@@ -460,6 +461,7 @@ async def miniapp_bootstrap(
             "feature_gifts": feature_gifts,
             "feature_support": feature_support,
             "feature_maintenance": feature_maintenance,
+            "app_theme_style": app_theme_style,
             "local_preview": identity.is_local_preview,
             "server_selection_supported": False,
             "server_mode": "automatic",
@@ -1785,6 +1787,7 @@ class AdminSettingsUpdateBody(BaseModel):
     feature_gifts: bool | None = None
     feature_support: bool | None = None
     feature_maintenance: bool | None = None
+    app_theme_style: str | None = None
     referral_bonus_rub: float | None = None
     referral_reward_percent: float | None = None
 
@@ -1812,6 +1815,7 @@ async def get_admin_settings(
         "feature_gifts": vals.get("feature_gifts", "true").lower() in {"1", "true", "yes", "on"},
         "feature_support": vals.get("feature_support", "true").lower() in {"1", "true", "yes", "on"},
         "feature_maintenance": vals.get("feature_maintenance", "false").lower() in {"1", "true", "yes", "on"},
+        "app_theme_style": vals.get("app_theme_style") or "classic",
         "referral_bonus_rub": float(vals.get("referral_bonus_rub") or 50.0),
         "referral_reward_percent": float(vals.get("referral_reward_percent") or 15.0),
     }
@@ -1854,6 +1858,8 @@ async def update_admin_settings(
         updates["feature_support"] = "true" if body.feature_support else "false"
     if body.feature_maintenance is not None:
         updates["feature_maintenance"] = "true" if body.feature_maintenance else "false"
+    if body.app_theme_style is not None:
+        updates["app_theme_style"] = body.app_theme_style.strip().lower()
     if body.referral_bonus_rub is not None:
         updates["referral_bonus_rub"] = str(body.referral_bonus_rub)
     if body.referral_reward_percent is not None:

@@ -3,6 +3,7 @@ import type {
   AdminPlan,
   AdminPromo,
   AdminUser,
+  AdminSettings,
   ConnectionLog,
   Device,
   Order,
@@ -17,6 +18,7 @@ export type {
   AdminPlan,
   AdminPromo,
   AdminUser,
+  AdminSettings,
   ConnectionLog,
   Device,
   Order,
@@ -44,13 +46,23 @@ export interface TrialOffer {
 }
 
 export interface AppConfig {
+  appName: string;
   supportUrl: string;
+  channelUrl: string;
   currency: string;
   minTopup: number;
   maxTopup: number;
   trafficPricePerGb: number;
   serverSelectionSupported: boolean;
   serverMode: string;
+  appThemeStyle?: 'classic' | 'modern';
+  featureReferral?: boolean;
+  featureTrial?: boolean;
+  featureTopup?: boolean;
+  featurePromos?: boolean;
+  featureGifts?: boolean;
+  featureSupport?: boolean;
+  featureMaintenance?: boolean;
 }
 
 export interface BootstrapData {
@@ -250,13 +262,23 @@ function normalize(raw: Record<string, any>): BootstrapData {
         }
       : null,
     config: {
+      appName: raw.config?.app_name ?? 'Mister VPN',
       supportUrl: raw.config?.support_url ?? 'https://t.me/misterfvpn_bot',
+      channelUrl: raw.config?.channel_url ?? 'https://t.me/misterfvpn_channel',
       currency: raw.config?.currency ?? 'RUB',
       minTopup: Number(raw.config?.min_topup ?? 100),
       maxTopup: Number(raw.config?.max_topup ?? 50000),
       trafficPricePerGb: Number(raw.config?.traffic_price_per_gb ?? 3),
       serverSelectionSupported: Boolean(raw.config?.server_selection_supported),
       serverMode: raw.config?.server_mode ?? 'automatic',
+      appThemeStyle: (raw.config?.app_theme_style === 'modern' ? 'modern' : 'classic'),
+      featureReferral: Boolean(raw.config?.feature_referral ?? true),
+      featureTrial: Boolean(raw.config?.feature_trial ?? true),
+      featureTopup: Boolean(raw.config?.feature_topup ?? true),
+      featurePromos: Boolean(raw.config?.feature_promos ?? true),
+      featureGifts: Boolean(raw.config?.feature_gifts ?? true),
+      featureSupport: Boolean(raw.config?.feature_support ?? true),
+      featureMaintenance: Boolean(raw.config?.feature_maintenance ?? false),
     },
   };
 }
@@ -589,5 +611,70 @@ export async function adminSendBroadcast(text: string, buttonText?: string, butt
       confirm: true,
     }),
   });
+}
+
+export async function getAdminSettings(): Promise<AdminSettings> {
+  const raw = await request<Record<string, any>>('/miniapp/api/admin/settings');
+  return {
+    appName: String(raw.app_name ?? 'Mister VPN'),
+    supportUrl: String(raw.support_url ?? ''),
+    channelUrl: String(raw.channel_url ?? ''),
+    currency: String(raw.currency ?? 'RUB'),
+    minTopup: Number(raw.min_topup ?? 50),
+    maxTopup: Number(raw.max_topup ?? 10000),
+    featureReferral: Boolean(raw.feature_referral ?? true),
+    featureTrial: Boolean(raw.feature_trial ?? true),
+    featureTopup: Boolean(raw.feature_topup ?? true),
+    featurePromos: Boolean(raw.feature_promos ?? true),
+    featureGifts: Boolean(raw.feature_gifts ?? true),
+    featureSupport: Boolean(raw.feature_support ?? true),
+    featureMaintenance: Boolean(raw.feature_maintenance ?? false),
+    appThemeStyle: (raw.app_theme_style === 'modern' ? 'modern' : 'classic'),
+    referralBonusRub: Number(raw.referral_bonus_rub ?? 50),
+    referralRewardPercent: Number(raw.referral_reward_percent ?? 15),
+  };
+}
+
+export async function updateAdminSettings(settings: Partial<AdminSettings>): Promise<AdminSettings> {
+  const body: Record<string, any> = {};
+  if (settings.appName !== undefined) body.app_name = settings.appName;
+  if (settings.supportUrl !== undefined) body.support_url = settings.supportUrl;
+  if (settings.channelUrl !== undefined) body.channel_url = settings.channelUrl;
+  if (settings.currency !== undefined) body.currency = settings.currency;
+  if (settings.minTopup !== undefined) body.min_topup = settings.minTopup;
+  if (settings.maxTopup !== undefined) body.max_topup = settings.maxTopup;
+  if (settings.featureReferral !== undefined) body.feature_referral = settings.featureReferral;
+  if (settings.featureTrial !== undefined) body.feature_trial = settings.featureTrial;
+  if (settings.featureTopup !== undefined) body.feature_topup = settings.featureTopup;
+  if (settings.featurePromos !== undefined) body.feature_promos = settings.featurePromos;
+  if (settings.featureGifts !== undefined) body.feature_gifts = settings.featureGifts;
+  if (settings.featureSupport !== undefined) body.feature_support = settings.featureSupport;
+  if (settings.featureMaintenance !== undefined) body.feature_maintenance = settings.featureMaintenance;
+  if (settings.appThemeStyle !== undefined) body.app_theme_style = settings.appThemeStyle;
+  if (settings.referralBonusRub !== undefined) body.referral_bonus_rub = settings.referralBonusRub;
+  if (settings.referralRewardPercent !== undefined) body.referral_reward_percent = settings.referralRewardPercent;
+
+  const raw = await request<Record<string, any>>('/miniapp/api/admin/settings', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+  return {
+    appName: String(raw.app_name ?? 'Mister VPN'),
+    supportUrl: String(raw.support_url ?? ''),
+    channelUrl: String(raw.channel_url ?? ''),
+    currency: String(raw.currency ?? 'RUB'),
+    minTopup: Number(raw.min_topup ?? 50),
+    maxTopup: Number(raw.max_topup ?? 10000),
+    featureReferral: Boolean(raw.feature_referral ?? true),
+    featureTrial: Boolean(raw.feature_trial ?? true),
+    featureTopup: Boolean(raw.feature_topup ?? true),
+    featurePromos: Boolean(raw.feature_promos ?? true),
+    featureGifts: Boolean(raw.feature_gifts ?? true),
+    featureSupport: Boolean(raw.feature_support ?? true),
+    featureMaintenance: Boolean(raw.feature_maintenance ?? false),
+    appThemeStyle: (raw.app_theme_style === 'modern' ? 'modern' : 'classic'),
+    referralBonusRub: Number(raw.referral_bonus_rub ?? 50),
+    referralRewardPercent: Number(raw.referral_reward_percent ?? 15),
+  };
 }
 

@@ -8,6 +8,9 @@ import {
   Search,
   Send,
   Tag,
+  Sliders,
+  Users,
+  Save,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -17,13 +20,17 @@ import { GradientButton } from '../components/GradientButton';
 import { Screen } from '../components/Screen';
 import { haptic, hapticNotify, showAlert } from '../lib/telegram';
 import * as api from '../api/client';
-import type { AdminOverview, AdminPlan, AdminPromo, AdminUser } from '../types';
+import type { AdminOverview, AdminPlan, AdminPromo, AdminUser, AdminSettings } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 export function AdminScreen() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'plans' | 'promos' | 'broadcast'>('overview');
+  const refresh = useAppStore((s) => s.refresh);
+  const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'users' | 'plans' | 'promos' | 'broadcast'>('overview');
 
   const [overview, setOverview] = useState<AdminOverview | null>(null);
+  const [settings, setSettings] = useState<AdminSettings | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [plans, setPlans] = useState<AdminPlan[]>([]);
   const [promos, setPromos] = useState<AdminPromo[]>([]);
@@ -59,14 +66,16 @@ export function AdminScreen() {
 
   const loadData = async () => {
     try {
-      const [ov, pl, pr] = await Promise.all([
+      const [ov, pl, pr, st] = await Promise.all([
         api.getAdminOverview().catch(() => null),
         api.getAdminPlans().catch(() => []),
         api.getAdminPromos().catch(() => []),
+        api.getAdminSettings().catch(() => null),
       ]);
       if (ov) setOverview(ov);
       setPlans(pl);
       setPromos(pr);
+      if (st) setSettings(st);
     } catch {
       // ignore
     }
@@ -268,6 +277,53 @@ export function AdminScreen() {
     }
   };
 
+  const handleToggleFeature = async (featureKey: keyof AdminSettings) => {
+    if (!settings) return;
+    haptic('light');
+    const updated = { ...settings, [featureKey]: !settings[featureKey] };
+    setSettings(updated);
+    try {
+      await api.updateAdminSettings({ [featureKey]: updated[featureKey] });
+      hapticNotify('success');
+    } catch (e) {
+      setSettings(settings);
+      showAlert(e instanceof Error ? e.message : 'Ошибка сохранения настройки');
+    }
+  };
+
+  const handleSaveThemeStyle = async (style: 'classic' | 'modern') => {
+    if (!settings) return;
+    haptic('medium');
+    const updated = { ...settings, appThemeStyle: style };
+    setSettings(updated);
+    try {
+      await api.updateAdminSettings({ appThemeStyle: style });
+      await refresh();
+      hapticNotify('success');
+      showAlert(`Стиль интерфейса изменен на: ${style === 'modern' ? 'Новый стиль ✨' : 'Классический'}`);
+    } catch (e) {
+      setSettings(settings);
+      showAlert(e instanceof Error ? e.message : 'Ошибка смены стиля');
+    }
+  };
+
+  const handleSaveGeneralSettings = async () => {
+    if (!settings) return;
+    setSavingSettings(true);
+    try {
+      const res = await api.updateAdminSettings(settings);
+      setSettings(res);
+      await refresh();
+      hapticNotify('success');
+      showAlert('✅ Настройки бота успешно сохранены!');
+    } catch (e) {
+      hapticNotify('error');
+      showAlert(e instanceof Error ? e.message : 'Ошибка сохранения настроек');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   return (
     <Screen>
       <div className="space-y-4 pt-1">
@@ -291,6 +347,7 @@ export function AdminScreen() {
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
             { key: 'overview', label: 'Аналитика' },
+            { key: 'settings', label: '⚙️ Настройки' },
             { key: 'users', label: 'Пользователи' },
             { key: 'plans', label: 'Тарифы' },
             { key: 'promos', label: 'Промокоды' },
@@ -312,6 +369,288 @@ export function AdminScreen() {
             </button>
           ))}
         </div>
+
+        {/* TAB: SETTINGS */}
+        {activeTab === 'settings' && (
+          <div className="space-y-4">
+            {/* 0. UI Theme Style Switcher */}
+            <GlassCard className="p-4 space-y-3">
+              <div className="flex items-center gap-2 border-b border-white/[0.06] pb-2.5">
+                <Sliders size={16} className="text-white" />
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  Стиль интерфейса Mini App
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveThemeStyle('classic')}
+                  className={`p-3 rounded-2xl border text-left transition-all ${
+                    (settings?.appThemeStyle || 'classic') === 'classic'
+                      ? 'border-white/40 bg-white/10 shadow-lg'
+                      : 'border-white/10 bg-white/[0.02] opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                    <span>Классический</span>
+                    {(settings?.appThemeStyle || 'classic') === 'classic' && (
+                      <span className="text-[10px] bg-white text-black px-1.5 py-0.5 rounded font-bold">АКТИВЕН</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-txt3 mt-1">Оригинальный Noir дизайн</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveThemeStyle('modern')}
+                  className={`p-3 rounded-2xl border text-left transition-all ${
+                    settings?.appThemeStyle === 'modern'
+                      ? 'border-emerald-400/40 bg-emerald-500/10 shadow-lg'
+                      : 'border-white/10 bg-white/[0.02] opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                    <span>Новый стиль ✨</span>
+                    {settings?.appThemeStyle === 'modern' && (
+                      <span className="text-[10px] bg-emerald-500 text-black px-1.5 py-0.5 rounded font-bold">АКТИВЕН</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-txt3 mt-1">Dashboard & Sidebar стиль</div>
+                </button>
+              </div>
+            </GlassCard>
+
+            {/* 1. Master Feature Toggles */}
+            <GlassCard className="p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-white/[0.06] pb-2.5">
+                <Sliders size={16} className="text-white" />
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  Включение / Выключение функций бота
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {[
+                  {
+                    key: 'featureReferral' as const,
+                    title: '👥 Реферальная программа',
+                    desc: 'Реферальные ссылки, начисление бонусов и раздел «Рефералы»',
+                    active: settings?.featureReferral ?? true,
+                  },
+                  {
+                    key: 'featureTrial' as const,
+                    title: '🎁 Бесплатный пробный период',
+                    desc: 'Выдача бесплатной тестовой подписки для новых пользователей',
+                    active: settings?.featureTrial ?? true,
+                  },
+                  {
+                    key: 'featureTopup' as const,
+                    title: '💳 Пополнение баланса',
+                    desc: 'Возможность пополнять баланс через СБП, Карты и Крипту',
+                    active: settings?.featureTopup ?? true,
+                  },
+                  {
+                    key: 'featurePromos' as const,
+                    title: '🎟️ Промокоды и купоны',
+                    desc: 'Активация подарочных и скидочных промокодов',
+                    active: settings?.featurePromos ?? true,
+                  },
+                  {
+                    key: 'featureGifts' as const,
+                    title: '🎁 Подарки подписок (Gifts)',
+                    desc: 'Возможность дарить подписку другому пользователю',
+                    active: settings?.featureGifts ?? true,
+                  },
+                  {
+                    key: 'featureSupport' as const,
+                    title: '💬 Тикеты техподдержки',
+                    desc: 'Прием обращений в поддержку прямо через приложение',
+                    active: settings?.featureSupport ?? true,
+                  },
+                  {
+                    key: 'featureMaintenance' as const,
+                    title: '🛠️ Режим техработ (Maintenance)',
+                    desc: 'Блокирует доступ обычным пользователям с предупреждением',
+                    active: settings?.featureMaintenance ?? false,
+                    danger: true,
+                  },
+                ].map((feat) => (
+                  <div
+                    key={feat.key}
+                    onClick={() => handleToggleFeature(feat.key)}
+                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
+                      feat.danger && feat.active
+                        ? 'border-amber-500/40 bg-amber-500/10'
+                        : feat.active
+                          ? 'border-white/20 bg-white/[0.05]'
+                          : 'border-white/5 bg-white/[0.01] opacity-60'
+                    }`}
+                  >
+                    <div className="space-y-0.5 pr-3">
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>{feat.title}</span>
+                        {feat.danger && feat.active && (
+                          <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono">АКТИВНО</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-txt2 leading-snug">{feat.desc}</div>
+                    </div>
+
+                    <div
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                        feat.danger && feat.active
+                          ? 'bg-amber-500'
+                          : feat.active
+                            ? 'bg-emerald-500'
+                            : 'bg-zinc-800'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          feat.active ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            {/* 2. General Brand & Service Info */}
+            <GlassCard className="p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-white/[0.06] pb-2.5">
+                <Crown size={16} className="text-white" />
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  Название и Ссылки
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                    Название сервиса / бота
+                  </label>
+                  <input
+                    type="text"
+                    value={settings?.appName || ''}
+                    onChange={(e) => setSettings((s) => s ? { ...s, appName: e.target.value } : null)}
+                    placeholder="Mister VPN"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs font-bold text-white focus:outline-none focus:border-white/30"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                      Ссылка на поддержку
+                    </label>
+                    <input
+                      type="text"
+                      value={settings?.supportUrl || ''}
+                      onChange={(e) => setSettings((s) => s ? { ...s, supportUrl: e.target.value } : null)}
+                      placeholder="https://t.me/support_bot"
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                      Ссылка на канал
+                    </label>
+                    <input
+                      type="text"
+                      value={settings?.channelUrl || ''}
+                      onChange={(e) => setSettings((s) => s ? { ...s, channelUrl: e.target.value } : null)}
+                      placeholder="https://t.me/channel"
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                      Валюта
+                    </label>
+                    <input
+                      type="text"
+                      value={settings?.currency || 'RUB'}
+                      onChange={(e) => setSettings((s) => s ? { ...s, currency: e.target.value } : null)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                      Мин. пополнение (₽)
+                    </label>
+                    <input
+                      type="number"
+                      value={settings?.minTopup ?? 50}
+                      onChange={(e) => setSettings((s) => s ? { ...s, minTopup: Number(e.target.value) } : null)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                      Макс. пополнение (₽)
+                    </label>
+                    <input
+                      type="number"
+                      value={settings?.maxTopup ?? 10000}
+                      onChange={(e) => setSettings((s) => s ? { ...s, maxTopup: Number(e.target.value) } : null)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+
+            {/* 3. Referral Settings */}
+            <GlassCard className="p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-white/[0.06] pb-2.5">
+                <Users size={16} className="text-white" />
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  Настройки рефералов
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                    Бонус за друга (₽)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings?.referralBonusRub ?? 50}
+                    onChange={(e) => setSettings((s) => s ? { ...s, referralBonusRub: Number(e.target.value) } : null)}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-txt3">
+                    Процент от покупок (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings?.referralRewardPercent ?? 15}
+                    onChange={(e) => setSettings((s) => s ? { ...s, referralRewardPercent: Number(e.target.value) } : null)}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs text-white focus:outline-none focus:border-white/30"
+                  />
+                </div>
+              </div>
+            </GlassCard>
+
+            {/* Save Button */}
+            <GradientButton onClick={handleSaveGeneralSettings} loading={savingSettings}>
+              <Save size={16} />
+              <span>Сохранить настройки</span>
+            </GradientButton>
+          </div>
+        )}
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (

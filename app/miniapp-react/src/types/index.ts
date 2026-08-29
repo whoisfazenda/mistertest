@@ -193,3 +193,22 @@ export interface AdminPromo {
   expiresAt?: string;
   createdAt: string;
 }
+
+export interface AdminSettings {
+  appName: string;
+  supportUrl: string;
+  channelUrl: string;
+  currency: string;
+  minTopup: number;
+  maxTopup: number;
+  featureReferral: boolean;
+  featureTrial: boolean;
+  featureTopup: boolean;
+  featurePromos: boolean;
+  featureGifts: boolean;
+  featureSupport: boolean;
+  featureMaintenance: boolean;
+  appThemeStyle?: 'classic' | 'modern';
+  referralBonusRub: number;
+  referralRewardPercent: number;
+}
