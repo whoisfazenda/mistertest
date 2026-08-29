@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     # ── App ──────────────────────────────────────────────────
     dev_mode: bool = Field(default=False, alias="DEV_MODE")
     support_url: str = Field(default="https://t.me/misterfvpn_bot", alias="SUPPORT_URL")
-    public_base_url: str = Field(default="", alias="PUBLIC_BASE_URL")
+    public_base_url: str = Field(default="https://sub.misterv.site", alias="PUBLIC_BASE_URL")
     webhook_host: str = Field(default="0.0.0.0", alias="WEBHOOK_HOST")
     webhook_port: int = Field(default=8080, alias="WEBHOOK_PORT")
     plans_cache_ttl: int = Field(default=300, alias="PLANS_CACHE_TTL")

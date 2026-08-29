@@ -20,7 +20,7 @@ from app.repositories.subscriptions import SubscriptionRepository
 
 logger = get_logger(__name__)
 
-DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL = "https://sub.misterv.localnode.app:20173"
+DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL = "https://sub.misterv.site"
 
 
 def _parse_dt(value: Any) -> datetime | None:
