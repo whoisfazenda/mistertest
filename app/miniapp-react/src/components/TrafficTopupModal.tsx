@@ -91,29 +91,51 @@ export function TrafficTopupModal({ isOpen, onClose }: TrafficTopupModalProps) {
           <label className="text-xs font-semibold uppercase tracking-wider text-txt2">Способ оплаты</label>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => setMethod('balance')}
-              className={`rounded-xl border p-3 text-left transition-all ${
-                method === 'balance'
-                  ? 'border-white/40 bg-white/10 text-white'
-                  : 'border-white/10 bg-white/[0.03] text-txt2'
-              }`}
-            >
-              <div className="text-xs font-semibold text-white">Баланс бота</div>
-              <div className="text-[11px] text-txt2">
-                {Math.round(user?.balance ?? 0)} ₽
-              </div>
-            </button>
-
-            <button
               onClick={() => setMethod('card')}
               className={`rounded-xl border p-3 text-left transition-all ${
                 method === 'card'
-                  ? 'border-white/40 bg-white/10 text-white'
-                  : 'border-white/10 bg-white/[0.03] text-txt2'
+                  ? 'border-white/40 bg-white/10 text-white shadow-sm'
+                  : 'border-white/10 bg-white/[0.03] text-txt2 hover:bg-white/[0.06]'
               }`}
             >
-              <div className="text-xs font-semibold text-white">Карта / СБП</div>
-              <div className="text-[11px] text-txt2">Через шлюз</div>
+              <div className="text-xs font-bold text-white">💳 Карта</div>
+              <div className="text-[11px] text-zinc-400">МИР, Visa, MC</div>
+            </button>
+
+            <button
+              onClick={() => setMethod('sbp')}
+              className={`rounded-xl border p-3 text-left transition-all ${
+                method === 'sbp'
+                  ? 'border-white/40 bg-white/10 text-white shadow-sm'
+                  : 'border-white/10 bg-white/[0.03] text-txt2 hover:bg-white/[0.06]'
+              }`}
+            >
+              <div className="text-xs font-bold text-white">⚡️ СБП</div>
+              <div className="text-[11px] text-zinc-400">QR / Банк</div>
+            </button>
+
+            <button
+              onClick={() => setMethod('crypto')}
+              className={`rounded-xl border p-3 text-left transition-all ${
+                method === 'crypto'
+                  ? 'border-white/40 bg-white/10 text-white shadow-sm'
+                  : 'border-white/10 bg-white/[0.03] text-txt2 hover:bg-white/[0.06]'
+              }`}
+            >
+              <div className="text-xs font-bold text-white">💎 Крипта</div>
+              <div className="text-[11px] text-zinc-400">USDT, TON, BTC</div>
+            </button>
+
+            <button
+              onClick={() => setMethod('balance')}
+              className={`rounded-xl border p-3 text-left transition-all ${
+                method === 'balance'
+                  ? 'border-white/40 bg-white/10 text-white shadow-sm'
+                  : 'border-white/10 bg-white/[0.03] text-txt2 hover:bg-white/[0.06]'
+              }`}
+            >
+              <div className="text-xs font-bold text-white">💰 Баланс</div>
+              <div className="text-[11px] text-zinc-400">{Math.round(user?.balance ?? 0)} ₽</div>
             </button>
           </div>
         </div>
