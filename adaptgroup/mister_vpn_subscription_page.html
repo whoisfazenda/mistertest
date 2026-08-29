@@ -6,62 +6,92 @@
   <title>{{integration_name}} — Подписка</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
-      --bg: #000000;
-      --card-bg: #0c0c11;
-      --card-border: rgba(255, 255, 255, 0.08);
+      --bg: #050508;
+      --glass-bg: rgba(255, 255, 255, 0.035);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-inner: rgba(0, 0, 0, 0.45);
       --txt-main: #f8fafc;
       --txt-muted: #94a3b8;
       --txt-dim: #64748b;
       --accent: #38bdf8;
       --emerald: #10b981;
-      --red: #ef4444;
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
     body {
       background-color: var(--bg);
       color: var(--txt-main);
       font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
-      background-image: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+      position: relative;
+    }
+    /* Ambient glowing orbs in background for deep glass effect */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -100px;
+      right: -100px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
     }
     .wrap {
-      width: 100%;
-      max-width: 460px;
+      position: relative;
+      z-index: 1;
+      width: min(580px, 100%);
       margin: 0 auto;
-      padding: 14px 12px 36px;
+      padding: 24px 16px 56px;
     }
     .brand {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 20px;
       padding: 0 4px;
     }
     .brand-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       font-weight: 900;
-      font-size: 16px;
+      font-size: 18px;
       letter-spacing: -0.02em;
     }
     .logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 9px;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
       display: grid;
       place-items: center;
-      background: linear-gradient(135deg, #ffffff, #94a3b8);
-      color: #000;
+      background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+      color: #050508;
       font-weight: 900;
-      font-size: 15px;
+      font-size: 18px;
       overflow: hidden;
-      box-shadow: 0 4px 14px rgba(255,255,255,0.12);
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
     }
     .logo img {
       width: 100%;
@@ -71,232 +101,250 @@
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 3px 9px;
+      gap: 6px;
+      padding: 5px 12px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 10.5px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11.5px;
       font-weight: 700;
       color: var(--txt-muted);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 14px;
-      margin: 8px 0;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    /* Liquid Glass Card */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(36px) saturate(170%);
+      -webkit-backdrop-filter: blur(36px) saturate(170%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 22px;
+      margin: 14px 0;
+      box-shadow:
+        0 20px 48px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      position: relative;
     }
     .card-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
     .card-title {
-      font-size: 10.5px;
+      font-size: 12px;
       font-weight: 800;
       color: var(--txt-muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
     }
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 3px 9px;
+      gap: 6px;
+      padding: 5px 12px;
       border-radius: 999px;
       background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      border: 1px solid rgba(16, 185, 129, 0.28);
       color: var(--emerald);
       font-weight: 800;
-      font-size: 11px;
+      font-size: 12px;
     }
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--emerald);
-      box-shadow: 0 0 6px var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
     }
     .hero-plan {
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 900;
       letter-spacing: -0.02em;
-      margin-bottom: 3px;
-      color: #fff;
+      margin-bottom: 4px;
+      color: #ffffff;
     }
     .hero-date {
-      font-size: 11.5px;
+      font-size: 13px;
       color: var(--txt-muted);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
+      gap: 10px;
     }
     .stat-box {
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 9px 11px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 12px 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     .stat-label {
-      font-size: 9.5px;
+      font-size: 10.5px;
       font-weight: 700;
       color: var(--txt-dim);
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .stat-val {
-      font-size: 13.5px;
+      font-size: 15px;
       font-weight: 800;
-      margin-top: 2px;
+      margin-top: 3px;
       color: #fff;
       font-family: "JetBrains Mono", monospace;
     }
     .link-box {
-      background: rgba(0, 0, 0, 0.6);
+      background: var(--glass-inner);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 9px 11px;
+      border-radius: 16px;
+      padding: 13px 15px;
       word-break: break-all;
       font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
+      font-size: 12px;
       color: #cbd5e1;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       user-select: all;
     }
     .btn-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      gap: 8px;
     }
     .btn {
       width: 100%;
-      min-height: 40px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      min-height: 46px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
       background: rgba(255, 255, 255, 0.04);
       color: #fff;
       font-weight: 800;
-      font-size: 12.5px;
+      font-size: 13.5px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      transition: all 0.15s ease;
+      gap: 7px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       text-decoration: none;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     .btn:active {
-      transform: scale(0.97);
+      transform: scale(0.98);
     }
     .btn.primary {
       background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-      color: #000000;
+      color: #050508;
       border: none;
-      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 24px rgba(255, 255, 255, 0.18);
     }
     .qr-box {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 20px;
       background: #ffffff;
-      border-radius: 16px;
-      margin-top: 10px;
+      border-radius: 20px;
+      margin-top: 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     }
     .qr-box img {
-      width: 190px !important;
-      height: 190px !important;
+      width: 210px !important;
+      height: 210px !important;
       display: block;
-      border-radius: 6px;
+      border-radius: 8px;
     }
     .qr-note {
       color: #475569;
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
-      margin-top: 6px;
+      margin-top: 8px;
     }
     .os-tabs {
       display: flex;
-      gap: 5px;
-      margin-bottom: 8px;
+      gap: 6px;
+      margin-bottom: 12px;
       overflow-x: auto;
     }
     .os-tab {
       flex: 1;
-      min-height: 34px;
-      border: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.025);
+      min-height: 40px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--txt-muted);
-      border-radius: 10px;
+      border-radius: 14px;
       font-weight: 800;
-      font-size: 11.5px;
+      font-size: 12.5px;
       cursor: pointer;
       white-space: nowrap;
-      padding: 0 6px;
-      transition: all 0.15s;
+      padding: 0 10px;
+      transition: all 0.2s;
     }
     .os-tab.active {
       background: #ffffff;
-      color: #000;
-      border-color: #fff;
+      color: #050508;
+      border-color: #ffffff;
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
     }
     .app-selector {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
-      margin-bottom: 10px;
+      gap: 6px;
+      margin-bottom: 14px;
     }
     .app-pill {
-      border: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--txt-muted);
-      border-radius: 10px;
-      min-height: 34px;
+      border-radius: 14px;
+      min-height: 40px;
       font-weight: 800;
-      font-size: 11px;
+      font-size: 12px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.2s;
     }
     .app-pill.active {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.35);
       color: #fff;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.08);
     }
     .app-detail {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 14px;
-      padding: 12px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
     .app-detail h3 {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 800;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       color: #fff;
     }
     .app-detail p {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--txt-muted);
-      line-height: 1.4;
-      margin-bottom: 8px;
+      line-height: 1.5;
+      margin-bottom: 12px;
     }
     .steps {
       list-style: none;
-      margin-bottom: 10px;
+      margin-bottom: 14px;
     }
     .steps li {
       position: relative;
-      padding-left: 22px;
-      margin-bottom: 6px;
-      font-size: 11px;
+      padding-left: 26px;
+      margin-bottom: 8px;
+      font-size: 12px;
       color: #cbd5e1;
-      line-height: 1.35;
+      line-height: 1.45;
     }
     .steps li::before {
       content: counter(step);
@@ -304,30 +352,45 @@
       position: absolute;
       left: 0;
       top: 0;
-      width: 15px;
-      height: 15px;
+      width: 17px;
+      height: 17px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       color: var(--txt-muted);
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: 800;
       display: grid;
       place-items: center;
     }
+    .device-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      margin-bottom: 8px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .device-row:last-child {
+      margin-bottom: 0;
+    }
     .toast {
       position: fixed;
       left: 50%;
-      bottom: 20px;
+      bottom: 24px;
       transform: translateX(-50%);
-      padding: 9px 16px;
+      padding: 11px 20px;
       border-radius: 999px;
       background: #ffffff;
-      color: #000;
+      color: #050508;
       font-weight: 800;
-      font-size: 11.5px;
+      font-size: 12.5px;
       z-index: 1000;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85);
       animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes pop {
@@ -352,7 +415,7 @@
     </header>
 
     <!-- Subscription Status Card -->
-    <section class="card">
+    <section class="glass-card">
       <div class="card-head">
         <div class="card-title">Текущая подписка</div>
         <div class="status-pill">
@@ -377,7 +440,7 @@
     </section>
 
     <!-- Quick Import Card -->
-    <section class="card">
+    <section class="glass-card">
       <div class="card-head">
         <div class="card-title">Ссылка на подключение</div>
       </div>
@@ -391,12 +454,12 @@
 
       <div id="qrBox" class="qr-box" style="display: none;">
         <img id="qrImage" src="" alt="QR Code" />
-        <div class="qr-note">Наведите камеру в приложении Happ/Incy/Karing</div>
+        <div class="qr-note">Наведите камеру в приложении Happ / Incy / Karing</div>
       </div>
     </section>
 
     <!-- Applications & Guides -->
-    <section class="card">
+    <section class="glass-card">
       <div class="card-head">
         <div class="card-title">Настройка приложений</div>
       </div>
@@ -407,7 +470,7 @@
     </section>
 
     <!-- Connected Devices -->
-    <section class="card">
+    <section class="glass-card">
       <div class="card-head">
         <div class="card-title">Подключённые устройства</div>
       </div>
@@ -425,7 +488,6 @@
     function initQr() {
       const img = document.getElementById("qrImage");
       if (img) {
-        // Fast, reliable multi-provider QR with quick fallback
         img.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=6&data=" + encodeURIComponent(subUrl);
         img.onerror = function() {
           this.src = "https://quickchart.io/qr?size=250&margin=1&text=" + encodeURIComponent(subUrl);
@@ -455,7 +517,7 @@
       el.className = "toast";
       el.textContent = text;
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1800);
+      setTimeout(() => el.remove(), 2000);
     }
 
     const apps = {
@@ -645,7 +707,7 @@
         <ol class="steps" style="counter-reset: step;">
           ${cur.steps.map(s => `<li>${s}</li>`).join('')}
         </ol>
-        <div class="btn-row" style="margin-top: 10px;">
+        <div class="btn-row" style="margin-top: 12px;">
           ${deepLink ? `<a href="${deepLink}" class="btn primary">🚀 Открыть в ${cur.name}</a>` : `<button class="btn primary" onclick="copySub()">📋 Скопировать ссылку</button>`}
           ${cur.download ? `<a href="${cur.download}" target="_blank" rel="noopener" class="btn">📥 Скачать</a>` : ''}
         </div>
