@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Home, Users, User as UserIcon, Shield, HelpCircle, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { haptic } from '../../lib/telegram';
@@ -14,9 +14,32 @@ export function ModernAppLayout() {
   const config = useAppStore((s) => s.config);
   const isAdmin = Boolean(user?.isAdmin);
 
+  const mobileNavRef = useRef<HTMLDivElement>(null);
+  const touchStartXRef = useRef<number>(0);
+
+  const navItems = [
+    { id: 'home', label: 'Главная', icon: Home },
+    { id: 'referral', label: 'Заработок', icon: Users },
+    { id: 'profile', label: 'Профиль', icon: UserIcon },
+    ...(isAdmin ? [{ id: 'admin', label: 'Админка', icon: Shield }] : []),
+  ];
+
   const handleTabChange = (tab: any) => {
     haptic('light');
     setActiveTab(tab);
+  };
+
+  const updateMobileTabFromTouch = (clientX: number) => {
+    if (!mobileNavRef.current) return;
+    const rect = mobileNavRef.current.getBoundingClientRect();
+    const touchX = clientX - rect.left;
+    if (touchX < 0 || touchX > rect.width) return;
+    const targetIdx = Math.max(0, Math.min(navItems.length - 1, Math.floor((touchX / rect.width) * navItems.length)));
+    const target = navItems[targetIdx];
+    if (target && target.id !== activeTab) {
+      haptic('light');
+      setActiveTab(target.id as any);
+    }
   };
 
   return (
@@ -117,13 +140,27 @@ export function ModernAppLayout() {
         className="md:hidden fixed inset-x-0 bottom-0 z-40 px-4 pointer-events-auto select-none"
         style={{ paddingBottom: 'calc(10px + var(--safe-bottom, 10px))' }}
       >
-        <div className="relative mx-auto flex h-[62px] max-w-md items-center justify-around rounded-[26px] bg-white/95 p-1 shadow-lg backdrop-blur-xl border border-white/60">
-          {[
-            { id: 'home', label: 'Главная', icon: Home },
-            { id: 'referral', label: 'Заработок', icon: Users },
-            { id: 'profile', label: 'Профиль', icon: UserIcon },
-            ...(isAdmin ? [{ id: 'admin', label: 'Админка', icon: Shield }] : []),
-          ].map((item) => {
+        <div
+          ref={mobileNavRef}
+          onTouchStart={(e) => {
+            touchStartXRef.current = e.touches[0].clientX;
+            updateMobileTabFromTouch(e.touches[0].clientX);
+          }}
+          onTouchMove={(e) => updateMobileTabFromTouch(e.touches[0].clientX)}
+          onTouchEnd={(e) => {
+            const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+            const currentIdx = navItems.findIndex((i) => i.id === activeTab);
+            if (Math.abs(deltaX) > 25) {
+              if (deltaX < -25 && currentIdx < navItems.length - 1) {
+                handleTabChange(navItems[currentIdx + 1].id);
+              } else if (deltaX > 25 && currentIdx > 0) {
+                handleTabChange(navItems[currentIdx - 1].id);
+              }
+            }
+          }}
+          className="relative mx-auto flex h-[62px] max-w-md items-center justify-around rounded-[26px] bg-white/95 p-1 shadow-lg backdrop-blur-xl border border-white/60 cursor-pointer"
+        >
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (

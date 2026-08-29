@@ -1,12 +1,14 @@
-"""Public subscription management page.
+"""Public subscription management website and VPN node proxy.
 
-The page treats the subscription UUID as a bearer link. It never exposes the
-AdaptGroup API key to the browser: device listing/deletion happens server-side.
+Provides:
+- Self-hosted web page on the bot's domain for user subscription management (1-click app launch, QR code, devices, speed tests).
+- High-performance transparent proxy for VPN client apps (Happ, Incy, V2RayTun, Karing, Sing-Box, Shadowrocket).
 """
 from __future__ import annotations
 
 import html
 import json
+import os
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from typing import Any
@@ -70,10 +72,30 @@ _BLOCKED_REQUEST_HEADERS = {
 }
 
 
+def _e(val: Any) -> str:
+    return html.escape(str(val) if val is not None else "")
+
+
+def _is_browser_request(request: Request) -> bool:
+    accept = request.headers.get("accept", "").lower()
+    ua = request.headers.get("user-agent", "").lower()
+    vpn_clients = ("happ", "incy", "v2ray", "sing-box", "clash", "karing", "streisand", "shadowrocket", "v2box", "nekobox", "sagernet")
+    if any(vc in ua for vc in vpn_clients):
+        return False
+    return "text/html" in accept or "mozilla" in ua or "safari" in ua or "chrome" in ua
+
+
 @router.get("/s/{subscription_uuid}", response_class=HTMLResponse)
+@router.get("/subscription/{subscription_uuid}", response_class=HTMLResponse)
 async def subscription_page(request: Request, subscription_uuid: str) -> HTMLResponse:
     deleted = request.query_params.get("deleted") == "1"
     error = request.query_params.get("error") or ""
+    
+    # Calculate domain base URL
+    host = request.headers.get("host") or ""
+    scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
+    base_url = f"{scheme}://{host}" if host else ""
+    
     async with async_session_factory() as session:
         service = SubscriptionService(session, request.app.state.adaptgroup_client)
         sub = await SubscriptionRepository(session).get_by_uuid(subscription_uuid)
@@ -93,14 +115,14 @@ async def subscription_page(request: Request, subscription_uuid: str) -> HTMLRes
             if not error:
                 error = "Не удалось загрузить устройства. Попробуйте позже."
 
-    return HTMLResponse(_render_page(sub, devices, deleted=deleted, error=error))
+    return HTMLResponse(_render_page(sub, devices, deleted=deleted, error=error, base_url=base_url))
 
 
 @router.post("/s/{subscription_uuid}/devices/{device_id}/delete")
 async def delete_subscription_device(
     request: Request,
     subscription_uuid: str,
-    device_id: int,
+    device_id: str,
 ) -> RedirectResponse:
     async with async_session_factory() as session:
         service = SubscriptionService(session, request.app.state.adaptgroup_client)
@@ -117,12 +139,10 @@ async def delete_subscription_device(
 
 @router.get("/sub/{subscription_uuid}")
 async def proxy_subscription(request: Request, subscription_uuid: str) -> Response:
-    """Serve AdaptGroup subscription content under the Mister VPN domain.
+    """Serve AdaptGroup subscription content or render the website if opened in a browser."""
+    if _is_browser_request(request):
+        return await subscription_page(request, subscription_uuid)
 
-    The original URL remains the emergency fallback. A temporary failure in
-    this proxy therefore redirects the client directly to AdaptGroup instead
-    of returning a broken subscription.
-    """
     async with async_session_factory() as session:
         sub = await SubscriptionRepository(session).get_by_uuid(subscription_uuid)
         direct_url = upstream_subscription_url(
@@ -160,7 +180,6 @@ async def proxy_subscription(request: Request, subscription_uuid: str) -> Respon
 
 
 def _upstream_request_headers(headers: Mapping[str, str]) -> dict[str, str]:
-    """Forward VPN-client identity headers without leaking proxy credentials."""
     forwarded: dict[str, str] = {}
     for name, value in headers.items():
         lower_name = name.lower()
@@ -184,7 +203,6 @@ def _merge_query_params(
     direct_url: str,
     query_params: Sequence[tuple[str, str]],
 ) -> str:
-    """Preserve client device parameters when requesting or redirecting upstream."""
     return str(httpx.URL(direct_url).copy_merge_params(query_params))
 
 
@@ -192,10 +210,14 @@ def _render_page(
     sub: VPNSubscription,
     devices: list[dict[str, Any]],
     *,
-    deleted: bool,
-    error: str,
+    deleted: bool = False,
+    error: str = "",
+    base_url: str = "",
 ) -> str:
-    sub_url = _safe_url(public_subscription_url(sub.subscription_uuid)) or ""
+    sub_url = public_subscription_url(sub.subscription_uuid)
+    if base_url:
+        sub_url = f"{base_url.rstrip('/')}/sub/{quote(sub.subscription_uuid, safe='')}"
+
     status = (
         "Истекла"
         if sub.is_expired
@@ -205,421 +227,74 @@ def _render_page(
         if sub.is_active
         else "Неактивна"
     )
-    days_left = _days_left(sub.expires_at)
+    
+    plan_name = sub.plan_name or "Mister Unlimited VIP"
+    if sub.is_trial:
+        plan_name = "Пробный период (3 дня)"
+        
+    expires_str = format_date(sub.expires_at) if sub.expires_at else "Бессрочно"
+    
     used_devices = len(devices)
-    max_devices = sub.max_devices or used_devices or 0
-    free_devices = max(max_devices - used_devices, 0) if max_devices else 0
-    qr_url = (
-        "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data="
-        + quote(sub_url)
-        if sub_url
-        else ""
+    max_devices = sub.max_devices or 5
+    
+    traffic_used_gb = "0.0"
+    if sub.traffic_used_bytes:
+        traffic_used_gb = f"{sub.traffic_used_bytes / (1024**3):.1f}"
+        
+    traffic_limit_gb = "Безлимит"
+    if sub.traffic_limit_bytes and not sub.is_unlimited_traffic:
+        traffic_limit_gb = f"{sub.traffic_limit_bytes / (1024**3):.0f} ГБ"
+
+    # Read template from adaptgroup/mister_vpn_subscription_page.html
+    template_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+        "adaptgroup",
+        "mister_vpn_subscription_page.html",
     )
-    device_rows = "".join(_render_device_row(sub.subscription_uuid, d) for d in devices)
-    if not device_rows:
-        device_rows = '<p class="muted">Пока нет подключённых устройств.</p>'
-
-    flash = ""
-    if deleted:
-        flash = '<div class="flash ok">Устройство удалено. Слот освобождён.</div>'
-    elif error:
-        flash = f'<div class="flash err">{_e(error)}</div>'
-
-    return f"""<!doctype html>
+    
+    html_text = ""
+    if os.path.exists(template_path):
+        with open(template_path, "r", encoding="utf-8") as f:
+            html_text = f.read()
+    else:
+        html_text = f"""<!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mister VPN - подписка</title>
-  <style>
-    :root {{
-      color-scheme: dark;
-      --bg:#050505; --card:#101010; --soft:#181818; --line:#2a2a2a;
-      --text:#f4f4f4; --muted:#8d8d8d; --ok:#16c784; --danger:#ef4444;
-    }}
-    * {{ box-sizing:border-box }}
-    body {{
-      margin:0; background:var(--bg); color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      overflow-x:hidden;
-    }}
-    .wrap {{ width:min(620px,100%); margin:0 auto; padding:24px 14px 38px }}
-    .brand {{ display:flex; align-items:center; gap:12px; margin-bottom:28px; font-weight:800 }}
-    .logo {{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
-      background:linear-gradient(180deg,#fff,#8b8b8b); color:#050505; font-weight:900 }}
-    .hero {{ text-align:center; padding:8px 0 26px }}
-    .mark {{ width:70px; height:70px; margin:0 auto 16px; border-radius:22px; display:grid;
-      place-items:center; background:radial-gradient(circle,#3b3b3b,#111);
-      box-shadow:0 0 44px rgba(255,255,255,.14); color:#fff; font-size:30px }}
-    h1 {{ margin:0; font-size:38px; line-height:1.04; letter-spacing:-.01em }}
-    .subtitle {{ color:var(--muted); margin:10px 0 0; line-height:1.45 }}
-    .card {{
-      border:1px solid var(--line); border-radius:20px; background:var(--card);
-      padding:22px 24px; margin:14px 0;
-    }}
-    .card h2 {{ margin:0 0 16px; font-size:14px; color:var(--muted);
-      text-transform:uppercase; letter-spacing:.08em }}
-    .status {{ display:inline-flex; padding:7px 12px; border-radius:999px;
-      background:rgba(22,199,132,.12); color:var(--ok); font-weight:800; font-size:13px }}
-    .big {{ display:block; margin:8px 0 4px; font-size:40px; font-weight:900 }}
-    .muted {{ color:var(--muted) }}
-    .stats {{ display:grid; grid-template-columns:1fr 1fr; gap:12px }}
-    .mini {{ border:1px solid var(--line); border-radius:16px; background:var(--soft); padding:14px }}
-    .mini b {{ display:block; font-size:24px; margin-top:5px }}
-    .copybox {{ border:1px solid var(--line); border-radius:14px; background:#080808;
-      padding:14px; min-height:50px; word-break:break-all; font:13px ui-monospace,Consolas,monospace }}
-    .btn {{ width:100%; min-height:48px; border:1px solid #3a3a3a; border-radius:14px;
-      background:#1a1a1a; color:#fff; font-weight:850; cursor:pointer; text-decoration:none;
-      display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px }}
-    .btn.primary {{ background:linear-gradient(180deg,#fff,#b7b7b7); color:#050505 }}
-    .btn.danger {{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); color:#ffb4b4 }}
-    .tabs {{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px }}
-    .tab {{
-      border:1px solid var(--line); background:var(--soft); color:var(--muted);
-      min-height:42px; border-radius:13px; padding:0 14px; font-weight:850; cursor:pointer;
-    }}
-    .tab.active {{ background:#f5f5f5; color:#050505; border-color:#f5f5f5 }}
-    .app-layout {{ display:grid; grid-template-columns:170px 1fr; gap:14px; align-items:start }}
-    .app-list {{ display:grid; gap:8px }}
-    .app-choice {{
-      border:1px solid var(--line); background:var(--soft); color:#fff; border-radius:14px;
-      min-height:46px; padding:0 13px; font-weight:850; text-align:left; cursor:pointer;
-    }}
-    .app-choice.active {{ background:#f5f5f5; color:#050505; border-color:#f5f5f5 }}
-    .app-panel {{ border:1px solid var(--line); border-radius:16px; background:var(--soft); padding:17px }}
-    .app-panel h3 {{ margin:0; font-size:21px }}
-    .steps {{ margin:10px 0 0; padding:0; list-style:none; color:var(--muted); line-height:1.7 }}
-    .steps li::before {{ content:counter(step); counter-increment:step; display:inline-grid;
-      place-items:center; width:20px; height:20px; margin-right:10px; border:1px solid var(--line);
-      border-radius:50%; font-size:12px; color:#bdbdbd }}
-    .steps {{ counter-reset:step }}
-    .device {{ border-top:1px solid var(--line); padding:14px 0 }}
-    .device:first-child {{ border-top:0; padding-top:0 }}
-    .device-title {{ display:flex; justify-content:space-between; gap:12px; font-weight:850 }}
-    .flash {{ border-radius:14px; padding:12px 14px; margin:0 0 14px; font-weight:800 }}
-    .flash.ok {{ background:rgba(22,199,132,.12); color:#a9ffd9 }}
-    .flash.err {{ background:rgba(239,68,68,.12); color:#ffc1c1 }}
-    .qr {{ display:grid; place-items:center; padding:14px; border:1px solid var(--line);
-      border-radius:16px; background:#fff; margin-top:12px }}
-    .qr img {{ width:min(220px,100%); display:block }}
-    @media (max-width:540px) {{
-      .stats {{ grid-template-columns:1fr }} h1 {{ font-size:32px }} .card {{ padding:18px }}
-      .app-layout {{ grid-template-columns:1fr }}
-      .app-list {{ grid-template-columns:1fr 1fr }}
-    }}
-  </style>
-</head>
-<body>
-  <main class="wrap">
-    <div class="brand"><div class="logo">M</div><div>mistervpn</div></div>
-    {flash}
-    <section class="hero">
-      <div class="mark">◆</div>
-      <p class="muted">Подписка активна до <b>{_e(format_date(sub.expires_at))}</b></p>
-      <h1>Выберите приложение</h1>
-      <p class="subtitle">Скопируйте ключ или добавьте его в приложение вручную. Ниже есть QR-код и управление устройствами.</p>
-    </section>
-
-    <section class="card">
-      <div style="display:flex;justify-content:space-between;gap:12px;align-items:start">
-        <div>
-          <h2>Подписка</h2>
-          <div class="muted">{_e(sub.plan_name or 'VPN')}</div>
-          <span class="big">{_e(_date_short(sub.expires_at))}</span>
-          <div class="muted">{_e(days_left)} осталось</div>
-        </div>
-        <span class="status">{_e(status)}</span>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Ссылка</h2>
-      <div class="copybox" id="subUrl">{_e(sub_url or 'Ссылка пока недоступна')}</div>
-      <button class="btn primary" onclick="copySub()">Скопировать ссылку</button>
-      {f'<div class="qr"><img src="{qr_url}" alt="QR-код подписки"></div>' if qr_url else ''}
-    </section>
-
-    <section class="card stats">
-      <div class="mini"><span class="muted">Устройства</span><b>{used_devices} / {max_devices or '—'}</b></div>
-      <div class="mini"><span class="muted">Свободно</span><b>{free_devices if max_devices else '—'}</b></div>
-      <div class="mini"><span class="muted">Трафик</span><b>{_e(format_gb_used(sub.traffic_used_bytes, sub.traffic_limit_bytes))}</b></div>
-      <div class="mini"><span class="muted">Статус</span><b>{_e(status)}</b></div>
-    </section>
-
-    <section class="card">
-      <h2>Устройства</h2>
-      {device_rows}
-    </section>
-
-    <section class="card">
-      <h2>Приложения</h2>
-      {_apps_section()}
-    </section>
-  </main>
-  <script>
-    const subUrl = {json.dumps(sub_url)};
-    async function copySub() {{
-      if (!subUrl) return;
-      try {{
-        await navigator.clipboard.writeText(subUrl);
-        toast("Ссылка скопирована");
-      }} catch (e) {{
-        prompt("Скопируйте ссылку:", subUrl);
-      }}
-    }}
-    function toast(text) {{
-      const el = document.createElement("div");
-      el.textContent = text;
-      el.style.cssText = "position:fixed;left:50%;bottom:22px;transform:translateX(-50%);padding:11px 15px;border-radius:999px;background:#fff;color:#000;font-weight:850;z-index:50";
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1600);
-    }}
-    const apps = {_apps_json()};
-    let currentPlatform = "iphone";
-    let currentApp = 0;
-    function renderApps() {{
-      const platform = apps[currentPlatform];
-      const platformTabs = document.getElementById("platformTabs");
-      const appTabs = document.getElementById("appTabs");
-      const panel = document.getElementById("appPanel");
-      platformTabs.innerHTML = Object.entries(apps).map(([key, value]) =>
-        `<button class="tab ${{key === currentPlatform ? "active" : ""}}" onclick="currentPlatform='${{key}}';currentApp=0;renderApps()">${{value.label}}</button>`
-      ).join("");
-      appTabs.innerHTML = platform.items.map((item, index) =>
-        `<button class="app-choice ${{index === currentApp ? "active" : ""}}" onclick="currentApp=${{index}};renderApps()">${{item.name}}</button>`
-      ).join("");
-      const app = platform.items[currentApp] || platform.items[0];
-      panel.innerHTML = `
-        <h3>${{app.name}}</h3>
-        <p class="muted">${{app.lead}}</p>
-        <ol class="steps">${{app.steps.map(step => `<li>${{step}}</li>`).join("")}}</ol>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-          <button class="btn primary" onclick="copySub()">Скопировать ссылку</button>
-          <a class="btn" href="${{app.download}}" target="_blank" rel="noopener">Скачать</a>
-        </div>
-      `;
-    }}
-    renderApps();
-  </script>
-</body>
+<head><meta charset="utf-8"><title>Mister VPN</title></head>
+<body><h1>Mister VPN</h1><p>Подписка: {sub_url}</p></body>
 </html>"""
 
+    # Device list rendering
+    device_rows = []
+    for d in devices:
+        d_id = d.get("id") or d.get("device_id") or ""
+        d_name = d.get("name") or d.get("device_model") or "Устройство"
+        d_ip = d.get("ip") or "Недавно"
+        d_seen = d.get("last_seen") or "Активно"
+        del_form = f'''<form method="POST" action="/s/{quote(sub.subscription_uuid)}/devices/{quote(str(d_id))}/delete" style="margin:0;">
+            <button type="submit" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;">Отключить</button>
+        </form>'''
+        device_rows.append(f'''<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);margin-bottom:8px;">
+            <div>
+                <div style="font-weight:700;font-size:13px;color:#fff;">{_e(d_name)}</div>
+                <div style="font-size:11px;color:#8e8e9a;font-family:monospace;margin-top:2px;">IP: {_e(d_ip)} · {_e(d_seen)}</div>
+            </div>
+            {del_form}
+        </div>''')
 
-def _render_device_row(subscription_uuid: str, device: dict[str, Any]) -> str:
-    raw_id = _first(device, "id", "device_id", default="")
-    try:
-        device_id = int(raw_id)
-    except (TypeError, ValueError):
-        device_id = 0
-    name = _e(device.get("name") or device.get("device_model") or "Устройство")
-    os_name = _e(device.get("device_os") or "—")
-    ip = _e(device.get("ip_address") or "—")
-    last_seen = _e(device.get("last_seen") or "—")
-    button = ""
-    if device_id:
-        action = f"/s/{quote(subscription_uuid)}/devices/{device_id}/delete"
-        button = f"""
-        <form method="post" action="{action}" onsubmit="return confirm('Удалить это устройство?')">
-          <button class="btn danger" type="submit">Удалить устройство</button>
-        </form>"""
-    return f"""
-      <div class="device">
-        <div class="device-title"><span>{name}</span><span class="muted">{os_name}</span></div>
-        <div class="muted">IP: {ip}<br>Последняя активность: {last_seen}</div>
-        {button}
-      </div>"""
+    devices_html = "".join(device_rows) if device_rows else '<div style="text-align:center;padding:20px;color:#8e8e9a;font-size:12px;">Пока нет подключенных устройств</div>'
 
+    # Dynamic replacements
+    html_text = html_text.replace("{{integration_name}}", "Mister VPN")
+    html_text = html_text.replace("{{integration_avatar}}", "/miniapp/static/mister-character.png")
+    html_text = html_text.replace("{{plan_name}}", plan_name)
+    html_text = html_text.replace("{{sub_status}}", status)
+    html_text = html_text.replace("{{sub_end_date_full}}", expires_str)
+    html_text = html_text.replace("{{sub_devices_used}}", str(used_devices))
+    html_text = html_text.replace("{{sub_devices}}", str(max_devices))
+    html_text = html_text.replace("{{sub_traffic_used_gb}}", traffic_used_gb)
+    html_text = html_text.replace("{{sub_traffic_limit_gb}}", traffic_limit_gb)
+    html_text = html_text.replace("{{sub_url}}", sub_url)
+    html_text = html_text.replace("{{qr_code_url}}", f"https://api.qrserver.com/v1/create-qr-code/?size=260x260&data={quote(sub_url)}")
+    html_text = html_text.replace("{{devices_list}}", devices_html)
 
-def _apps_section() -> str:
-    return """
-      <div class="tabs" id="platformTabs"></div>
-      <div class="app-layout">
-        <div class="app-list" id="appTabs"></div>
-        <div class="app-panel" id="appPanel"></div>
-      </div>"""
-
-
-def _apps_json() -> str:
-    return json.dumps(
-        {
-            "iphone": {
-                "label": "iPhone",
-                "items": [
-                    {
-                        "name": "Happ",
-                        "lead": "Самый быстрый вариант для iPhone, если приложение уже установлено.",
-                        "download": "https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
-                        "steps": [
-                            "Нажмите «Скопировать ссылку» на этой странице.",
-                            "Откройте Happ и нажмите кнопку «+».",
-                            "Выберите импорт из буфера обмена или вставьте ссылку вручную.",
-                            "Обновите профиль и подключитесь к подходящему серверу.",
-                        ],
-                    },
-                    {
-                        "name": "Incy",
-                        "lead": "Удобный клиент для импорта подписки по ссылке.",
-                        "download": "https://apps.apple.com/us/app/incy/id6756943388",
-                        "steps": [
-                            "Скопируйте ссылку подписки.",
-                            "Откройте Incy и выберите добавление новой подписки.",
-                            "Вставьте ссылку из буфера обмена.",
-                            "Сохраните профиль, обновите список серверов и подключитесь.",
-                        ],
-                    },
-                    {
-                        "name": "V2RayTun",
-                        "lead": "Подходит, если нужен простой импорт подписки и быстрый старт.",
-                        "download": "https://apps.apple.com/us/app/v2raytun/id6476628951",
-                        "steps": [
-                            "Скопируйте ссылку подписки.",
-                            "Откройте V2RayTun и нажмите добавление профиля.",
-                            "Выберите импорт из буфера обмена или URL.",
-                            "Обновите подписку и включите VPN.",
-                        ],
-                    },
-                    {
-                        "name": "Karing",
-                        "lead": "Хороший вариант, если другие приложения не импортируют ссылку.",
-                        "download": "https://apps.apple.com/us/app/karing/id6472431552",
-                        "steps": [
-                            "Скопируйте ссылку подписки.",
-                            "Откройте Karing и добавьте профиль по URL.",
-                            "Вставьте ссылку, сохраните и обновите профиль.",
-                            "Выберите сервер и подключитесь.",
-                        ],
-                    },
-                ],
-            },
-            "android": {
-                "label": "Android",
-                "items": [
-                    {
-                        "name": "Happ",
-                        "lead": "Простой вариант для Android с импортом из буфера.",
-                        "download": "https://play.google.com/store/apps/details?id=com.happproxy&hl=ru",
-                        "steps": [
-                            "Скопируйте ссылку подписки.",
-                            "Откройте Happ и нажмите «Добавить».",
-                            "Импортируйте ссылку из буфера обмена.",
-                            "Обновите профиль и подключитесь.",
-                        ],
-                    },
-                    {
-                        "name": "Incy",
-                        "lead": "Удобный Android-клиент для импорта подписки по ссылке.",
-                        "download": "https://play.google.com/store/apps/details?id=llc.itdev.incy&hl=ru",
-                        "steps": [
-                            "Скопируйте ссылку подписки.",
-                            "Откройте Incy и выберите добавление подписки.",
-                            "Вставьте ссылку вручную или импортируйте её из буфера.",
-                            "Обновите профиль и включите VPN.",
-                        ],
-                    },
-                    {
-                        "name": "V2RayTun",
-                        "lead": "Удобный Android-клиент для подписок.",
-                        "download": "https://play.google.com/store/apps/details?id=com.v2raytun.android&hl=ru",
-                        "steps": [
-                            "Скопируйте ссылку подписки.",
-                            "Откройте V2RayTun и нажмите «+».",
-                            "Выберите импорт из буфера или URL подписки.",
-                            "Обновите подписку и включите VPN.",
-                        ],
-                    },
-                    {
-                        "name": "Karing",
-                        "lead": "Кроссплатформенный клиент с ручным добавлением URL.",
-                        "download": "https://github.com/KaringX/karing/releases",
-                        "steps": [
-                            "Откройте страницу релизов Karing.",
-                            "Скачайте Android APK для вашего устройства.",
-                            "Скопируйте ссылку подписки.",
-                            "Добавьте новый профиль по URL.",
-                            "Обновите профиль и подключитесь.",
-                        ],
-                    },
-                ],
-            },
-            "pc": {
-                "label": "ПК",
-                "items": [
-                    {
-                        "name": "Happ",
-                        "lead": "Desktop-клиент Happ для Windows, macOS и Linux.",
-                        "download": "https://github.com/Happ-proxy/happ-desktop/releases",
-                        "steps": [
-                            "Откройте GitHub Releases и скачайте версию для вашей системы.",
-                            "Скопируйте ссылку подписки на этой странице.",
-                            "Добавьте подписку через «+», URL или импорт из буфера.",
-                            "Обновите профиль и подключитесь.",
-                        ],
-                    },
-                    {
-                        "name": "Incy",
-                        "lead": "Desktop-версии Incy для ПК.",
-                        "download": "https://github.com/INCY-DEV/incy-platforms/releases",
-                        "steps": [
-                            "Откройте GitHub Releases и скачайте сборку для вашей системы.",
-                            "Скопируйте ссылку подписки.",
-                            "Создайте новую подписку и вставьте URL.",
-                            "Сохраните профиль, обновите список серверов и подключитесь.",
-                        ],
-                    },
-                    {
-                        "name": "V2RayTun",
-                        "lead": "ПК-клиент V2RayTun с релизами на GitHub.",
-                        "download": "https://github.com/DigneZzZ/v2raytun/releases",
-                        "steps": [
-                            "Откройте GitHub Releases и скачайте подходящий файл.",
-                            "Скопируйте ссылку подписки.",
-                            "Добавьте профиль через импорт из буфера или URL.",
-                            "Обновите подписку и включите VPN.",
-                        ],
-                    },
-                    {
-                        "name": "Karing",
-                        "lead": "Простой вариант для Windows/macOS с импортом URL.",
-                        "download": "https://github.com/KaringX/karing/releases",
-                        "steps": [
-                            "Скачайте версию для вашей системы.",
-                            "Скопируйте ссылку подписки на этой странице.",
-                            "Добавьте новый профиль по URL.",
-                            "Обновите профиль, выберите сервер и подключитесь.",
-                        ],
-                    },
-                ],
-            },
-        },
-        ensure_ascii=False,
-    )
-
-
-def _safe_url(value: str | None) -> str | None:
-    if not value:
-        return None
-    value = value.strip()
-    if value in {"-", "—"} or not value.startswith(("http://", "https://")):
-        return None
-    return value
-
-
-def _days_left(dt: datetime | None) -> str:
-    if dt is None:
-        return "—"
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    days = max((dt.astimezone(timezone.utc) - datetime.now(timezone.utc)).days, 0)
-    return f"{days} дн."
-
-
-def _date_short(dt: datetime | None) -> str:
-    if dt is None:
-        return "—"
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc).strftime("%d.%m.%Y")
-
-
-def _e(value: object) -> str:
-    return html.escape(str(value), quote=True)
+    return html_text
