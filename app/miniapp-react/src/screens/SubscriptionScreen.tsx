@@ -106,7 +106,11 @@ export default function SubscriptionScreen() {
             <InfoRow
               icon={<InfinityIcon size={18} strokeWidth={1.5} />}
               label="Трафик"
-              value={unlimited ? 'Безлимит' : `${formatGb(subscription.trafficUsedGb)} / ${formatGb(subscription.trafficLimitGb)}`}
+              value={
+                unlimited
+                  ? 'Безлимит'
+                  : `Осталось ${formatGb(Math.max(0, subscription.trafficLimitGb - subscription.trafficUsedGb))} из ${formatGb(subscription.trafficLimitGb)}`
+              }
             />
           </div>
 

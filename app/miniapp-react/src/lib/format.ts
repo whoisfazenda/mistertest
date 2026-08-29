@@ -24,7 +24,13 @@ export function formatRub(value: number): string {
 }
 
 export function formatGb(value: number): string {
-  return `${value.toFixed(1)} ГБ`;
+  const num = Number(value) || 0;
+  if (num <= 0) return '0 ГБ';
+  const rounded10 = Math.round(num * 10) / 10;
+  if (rounded10 === Math.floor(rounded10)) {
+    return `${rounded10} ГБ`;
+  }
+  return `${rounded10.toFixed(1)} ГБ`;
 }
 
 export function formatDate(ts: number): string {

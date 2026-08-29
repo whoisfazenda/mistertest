@@ -195,8 +195,8 @@ export default function HomeScreen() {
                       <span>Трафик:</span>
                       <span className="font-medium text-white">
                         {subscription.trafficLimitGb > 0
-                          ? `${formatGb(subscription.trafficUsedGb)} / ${formatGb(subscription.trafficLimitGb)}`
-                          : `${formatGb(subscription.trafficUsedGb)} / ∞`}
+                          ? `Осталось ${formatGb(Math.max(0, subscription.trafficLimitGb - subscription.trafficUsedGb))} из ${formatGb(subscription.trafficLimitGb)}`
+                          : 'Безлимит'}
                       </span>
                     </div>
                   </div>
