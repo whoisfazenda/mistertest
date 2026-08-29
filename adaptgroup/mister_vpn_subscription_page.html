@@ -393,8 +393,8 @@
         </div>
       </div>
 
-      <div class="hero-plan">{{plan_name}} · {{plan_devices}} устройств</div>
-      <div class="hero-date">Действует до <b>{{sub_end_date_full}}</b> (осталось {{sub_days_left_text}})</div>
+      <div class="hero-plan">{{plan_name}}</div>
+      <div class="hero-date">Действует до <b>{{sub_end_date_full}}</b></div>
 
       <div class="stats-grid">
         <div class="stat-box">
@@ -403,7 +403,7 @@
         </div>
         <div class="stat-box">
           <div class="stat-label">Трафик</div>
-          <div class="stat-val">{{sub_traffic_used_gb}} ГБ / {{sub_traffic_limit_gb}} ГБ</div>
+          <div class="stat-val">{{sub_traffic_used_gb}} ГБ / {{sub_traffic_limit_gb}}</div>
         </div>
       </div>
     </section>
@@ -437,17 +437,13 @@
       <div class="app-panel" id="appPanel"></div>
     </section>
 
-    <!-- Active Device -->
+    <!-- Connected Devices -->
     <section class="card">
       <div class="card-title">
-        <h2>Активное устройство</h2>
+        <h2>Подключённые устройства</h2>
       </div>
-
-      <div class="device-item">
-        <div>
-          <div class="device-name">📱 {{device_model}} ({{device_os}} {{device_os_version}})</div>
-          <div class="device-sub">Последняя активность: {{device_last_seen}}</div>
-        </div>
+      <div>
+        {{devices_list}}
       </div>
     </section>
   </main>

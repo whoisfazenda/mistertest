@@ -328,4 +328,8 @@ def _render_page(
     html_text = html_text.replace("{{qr_code_url}}", f"https://api.qrserver.com/v1/create-qr-code/?size=260x260&data={quote(sub_url)}")
     html_text = html_text.replace("{{devices_list}}", devices_html)
 
+    import re
+    # Clean any leftover placeholders
+    html_text = re.sub(r"\{\{[a-zA-Z0-9_]+\}\}", "", html_text)
+
     return html_text
