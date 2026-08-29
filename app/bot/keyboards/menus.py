@@ -23,6 +23,7 @@ def main_menu(*, is_admin: bool = False, show_trial: bool = False) -> InlineKeyb
     if show_trial:
         rows.append([("💎 Пробный период 7 дней", "trial:claim", "primary")])
     rows.append([("💡 Помощь", "help:open")])
+    rows.append([("👥 Пригласить друзей", "ref:open")])
     if is_admin:
         rows.append([("🛠 Админ-панель", "admin:menu", "danger")])
     return inline_keyboard(rows)
@@ -30,6 +31,16 @@ def main_menu(*, is_admin: bool = False, show_trial: bool = False) -> InlineKeyb
 
 def back_to_menu(label: str = "⬅️ В меню") -> InlineKeyboardMarkup:
     return inline_keyboard([[(label, "menu:open")]])
+
+
+def referral_keyboard(link: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [make_url_button("👥 Пригласить друга", link)],
+            [make_copy_button("📋 Скопировать ссылку", link)],
+            [make_button("⬅️ В меню", "menu:open")],
+        ]
+    )
 
 
 def support_keyboard() -> InlineKeyboardMarkup:

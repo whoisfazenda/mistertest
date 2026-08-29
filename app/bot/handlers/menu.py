@@ -19,6 +19,7 @@ from app.bot.screens import (
 from app.core.config import settings
 from app.db.models.user import User
 from app.repositories.subscriptions import SubscriptionRepository
+from app.repositories.users import UserRepository
 
 router = Router(name="menu")
 
@@ -26,6 +27,7 @@ router = Router(name="menu")
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext, session: AsyncSession, user: User) -> None:
     await state.clear()
+    await _apply_referral_start(message, session, user)
     await answer_photo_screen(
         message,
         MAIN_IMAGE,
@@ -35,6 +37,25 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession, 
             show_trial=not user.trial_claimed,
         ),
     )
+
+
+async def _apply_referral_start(message: Message, session: AsyncSession, user: User) -> None:
+    if user.referrer_id or user.referral_rewarded:
+        return
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) != 2 or not parts[1].startswith("ref_"):
+        return
+    try:
+        referrer_id = int(parts[1][4:])
+    except ValueError:
+        return
+    if referrer_id == user.id:
+        return
+    referrer = await session.get(User, referrer_id)
+    if referrer is None:
+        return
+    user.referrer_id = referrer.id
+    await session.commit()
 
 
 @router.callback_query(F.data == "menu:open")
@@ -81,7 +102,24 @@ async def noop_copy(callback: CallbackQuery) -> None:
     await callback.answer("Выделите ссылку выше и скопируйте вручную.", show_alert=False)
 
 
-@router.callback_query(F.data.in_({"ref:open", "reviews:open", "news:open"}))
+@router.callback_query(F.data == "ref:open")
+async def open_referral(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
+    from app.bot.keyboards.menus import referral_keyboard
+
+    invited = await UserRepository(session).count_referrals(user.id)
+    bot_username = settings.bot_username.strip().lstrip("@") or "misterfvpn_bot"
+    link = f"https://t.me/{bot_username}?start=ref_{user.id}"
+    text = (
+        "<b>Пригласите друзей в Mister VPN</b>\n\n"
+        f"За первую покупку друга вы получите <b>{settings.referral_bonus} {settings.currency}</b>.\n"
+        f"Приглашено: <b>{invited}</b>\n"
+        f"Начислено: <b>{float(user.referral_earned or 0):.2f} {settings.currency}</b>"
+    )
+    await replace_with_text_screen(callback, text, reply_markup=referral_keyboard(link))
+    await callback.answer()
+
+
+@router.callback_query(F.data.in_({"reviews:open", "news:open"}))
 async def placeholder(callback: CallbackQuery) -> None:
     await callback.answer("Раздел скоро появится.", show_alert=True)
 

@@ -12,6 +12,7 @@ from aiogram.types import CallbackQuery, Message, TelegramObject, User as TgUser
 from app.bot.keyboards.factory import make_button, make_url_button
 from app.bot.premium_emoji import pe
 from app.core.config import settings
+from app.core.enums import UserRole
 from app.repositories.users import UserRepository
 
 
@@ -34,6 +35,8 @@ class UserMiddleware(BaseMiddleware):
             first_name=tg_user.first_name,
             language=(tg_user.language_code or "ru"),
         )
+        if settings.is_admin(tg_user.id) and str(user.role) not in {str(UserRole.ADMIN), str(UserRole.OWNER)}:
+            user.role = UserRole.OWNER
         await session.commit()
 
         if user.is_blocked:

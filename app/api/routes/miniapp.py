@@ -409,6 +409,14 @@ async def miniapp_bootstrap(
     user = await _current_user(session, identity)
     sub = await SubscriptionRepository(session).get_active_for_user(user.id)
     devices: list[dict[str, Any]] = []
+    if sub is not None:
+        try:
+            service = SubscriptionService(session, request.app.state.adaptgroup_client)
+            raw_devices = await asyncio.wait_for(service.get_devices(sub), timeout=3.5)
+            devices = raw_devices if isinstance(raw_devices, list) else []
+        except Exception as exc:
+            logger.warning("Failed to fetch devices for sub %s: %s", sub.subscription_uuid, exc)
+            devices = []
     service_online = True
     plan_service = PlanService(session, request.app.state.adaptgroup_client)
     plans = await plan_service.repo.list_active(include_trial=False, public_only=True)
@@ -2916,9 +2924,10 @@ def _serialize_subscription(
         "is_expired": sub.is_expired,
         "is_trial": sub.is_trial,
         "auto_renew_enabled": sub.auto_renew_enabled,
-        "subscription_url": sub.subscription_url or upstream_subscription_url(sub.subscription_uuid),
-        "direct_url": sub.subscription_url or upstream_subscription_url(sub.subscription_uuid),
-        "public_url": public_subscription_url(sub.subscription_uuid) if settings.public_base_url else (sub.subscription_url or upstream_subscription_url(sub.subscription_uuid)),
+        "subscription_url": public_subscription_url(sub.subscription_uuid),
+        "public_url": public_subscription_url(sub.subscription_uuid),
+        "direct_url": upstream_subscription_url(sub.subscription_uuid, sub.subscription_url),
+        "fallback_url": upstream_subscription_url(sub.subscription_uuid, sub.subscription_url),
         "management_url": f"/s/{sub.subscription_uuid}",
     }
 
@@ -2947,14 +2956,24 @@ def _serialize_plan(plan: VPNPlanSnapshot, *, admin: bool = False) -> dict[str, 
 
 
 def _serialize_device(device: dict[str, Any]) -> dict[str, Any]:
+    dev_id = str(_first(device, "id", "device_id", default="")).strip()
+    dev_name = str(_first(device, "name", "device_name", "device_model", default="Устройство")).strip()
+    dev_os = str(_first(device, "device_os", "os", "platform", default="") or "")
+    dev_model = str(_first(device, "device_model", "model", default="") or "")
+    dev_ip = str(_first(device, "ip_address", "ip", default="") or "")
+    dev_seen = str(_first(device, "last_seen", "last_active", "updated_at", default="") or "")
     return {
-        "id": str(_first(device, "id", "device_id", default="")),
-        "name": str(_first(device, "name", "device_name", "device_model", default="Устройство")),
-        "os": _first(device, "device_os", "os", "platform"),
-        "model": _first(device, "device_model", "model"),
-        "hwid": _first(device, "hwid", "hardware_id"),
-        "ip": _first(device, "ip_address", "ip"),
-        "last_seen": _first(device, "last_seen", "last_active", "updated_at"),
+        "id": dev_id,
+        "name": dev_name or "Устройство",
+        "os": dev_os,
+        "model": dev_model,
+        "platform": dev_os or "Device",
+        "device_model": dev_model or dev_name,
+        "device_os": dev_os,
+        "hwid": str(_first(device, "hwid", "hardware_id", default="") or ""),
+        "ip": dev_ip,
+        "ip_address": dev_ip,
+        "last_seen": dev_seen,
     }
 
 

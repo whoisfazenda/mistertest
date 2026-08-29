@@ -24,6 +24,7 @@ import { QrModal } from '../components/QrModal';
 import { DeepLinkButtons } from '../components/DeepLinkButtons';
 import { CustomRenewModal } from '../components/CustomRenewModal';
 import { TrafficTopupModal } from '../components/TrafficTopupModal';
+import { CopyLinkModal } from '../components/CopyLinkModal';
 import { formatDate, formatGb, staggerItem } from '../lib/format';
 import { haptic, hapticNotify, showAlert } from '../lib/telegram';
 import { useAppStore } from '../store/useAppStore';
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const refresh = useAppStore((s) => s.refresh);
 
   const [qrOpen, setQrOpen] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   const [renewOpen, setRenewOpen] = useState(false);
   const [trafficOpen, setTrafficOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -51,21 +53,6 @@ export default function HomeScreen() {
   const progress = isExpired ? 0 : Math.min(days / ringMax, 1);
   const circumference = 2 * Math.PI * 50;
   const dash = circumference * progress;
-
-  const copyUrl = async () => {
-    const url = subscription?.subscriptionUrl || subscription?.publicUrl;
-    if (!url) {
-      showAlert('Ссылка подписки пока недоступна');
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      hapticNotify('success');
-      showAlert('✅ Ссылка подписки скопирована в буфер обмена');
-    } catch {
-      prompt('Скопируйте ссылку:', url);
-    }
-  };
 
   const handleClaimTrial = async () => {
     if (claiming) return;
@@ -220,7 +207,10 @@ export default function HomeScreen() {
               <motion.div variants={staggerItem}>
                 <div className="grid grid-cols-2 gap-2.5">
                   <button
-                    onClick={copyUrl}
+                    onClick={() => {
+                      haptic('light');
+                      setCopyOpen(true);
+                    }}
                     className="flex h-12 items-center justify-center gap-2 rounded-btn border border-white/15 bg-white/[0.05] font-semibold text-white transition-all hover:bg-white/[0.1] active:scale-[0.98]"
                   >
                     <Copy size={16} />
@@ -464,6 +454,11 @@ export default function HomeScreen() {
         isOpen={renewOpen}
         onClose={() => setRenewOpen(false)}
         onSuccess={() => void refresh()}
+      />
+
+      <CopyLinkModal
+        isOpen={copyOpen}
+        onClose={() => setCopyOpen(false)}
       />
 
       <TrafficTopupModal

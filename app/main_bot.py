@@ -23,6 +23,7 @@ from app.core.logging import get_logger, setup_logging
 from app.services.device_monitor import run_device_monitor_loop
 from app.services.auto_renew import run_auto_renew_loop
 from app.services.reminders import run_subscription_reminder_loop
+from app.services.admin_operations import run_admin_campaign_loop
 
 logger = get_logger(__name__)
 
@@ -73,11 +74,12 @@ async def main() -> None:
     reminder_task = asyncio.create_task(run_subscription_reminder_loop(bot))
     device_monitor_task = asyncio.create_task(run_device_monitor_loop(bot))
     auto_renew_task = asyncio.create_task(run_auto_renew_loop(bot))
+    campaign_task = asyncio.create_task(run_admin_campaign_loop(bot))
     try:
         await bot.delete_webhook(drop_pending_updates=False)
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     finally:
-        for task in (reminder_task, device_monitor_task, auto_renew_task):
+        for task in (reminder_task, device_monitor_task, auto_renew_task, campaign_task):
             task.cancel()
             with suppress(asyncio.CancelledError):
                 await task

@@ -224,6 +224,7 @@ function normalize(raw: Record<string, any>): BootstrapData {
           subscriptionUrl: sub.subscription_url,
           publicUrl: sub.public_url || sub.subscription_url,
           directUrl: sub.direct_url,
+          fallbackUrl: sub.fallback_url || sub.direct_url,
         }
       : null,
     devices: (raw.devices ?? []).map((item: Record<string, unknown>) => ({

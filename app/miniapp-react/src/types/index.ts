@@ -45,6 +45,7 @@ export interface Subscription {
   subscriptionUrl?: any;
   publicUrl?: any;
   directUrl?: any;
+  fallbackUrl?: any;
   rawConfig?: any;
   autoRenewEnabled?: any;
 }

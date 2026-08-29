@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import {
   AlertCircle,
   Apple,
-  Check,
   Copy,
   Download,
   ExternalLink,
@@ -19,6 +18,7 @@ import { GlassCard, StaggerGroup } from '../components/GlassCard';
 import { HeroBanner } from '../components/HeroBanner';
 import { PullToRefresh } from '../components/PullToRefresh';
 import { Screen } from '../components/Screen';
+import { CopyLinkModal } from '../components/CopyLinkModal';
 import { staggerItem } from '../lib/format';
 import { haptic, hapticNotify, openLink, showAlert } from '../lib/telegram';
 import { useAppStore } from '../store/useAppStore';
@@ -150,26 +150,10 @@ export default function DevicesScreen() {
   const [activeTab, setActiveTab] = useState<'guides' | 'devices'>('guides');
   const [guidePlatform, setGuidePlatform] = useState<'ios' | 'android' | 'windows' | 'mac'>('ios');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
 
   const subUrl = subscription?.subscriptionUrl || subscription?.publicUrl || '';
-
-  const handleCopy = async () => {
-    if (!subUrl) {
-      showAlert('Ссылка подписки пока недоступна');
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(subUrl);
-      setCopied(true);
-      hapticNotify('success');
-      showAlert('✅ Ссылка подписки скопирована в буфер обмена!\n\nВставьте её в приложение через значок «+» -> «Импорт из буфера обмена».');
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      prompt('Скопируйте ссылку подписки:', subUrl);
-    }
-  };
 
   const handleDeleteDevice = async (deviceId: string, deviceName: string) => {
     if (deletingId) return;
@@ -255,11 +239,14 @@ export default function DevicesScreen() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <button
-                        onClick={handleCopy}
+                        onClick={() => {
+                          haptic('light');
+                          setCopyOpen(true);
+                        }}
                         className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white py-2.5 text-xs font-bold text-black hover:bg-zinc-200 active:scale-[0.98]"
                       >
-                        {copied ? <Check size={14} /> : <Copy size={14} />}
-                        <span>{copied ? 'Скопировано!' : 'Скопировать ссылку'}</span>
+                        <Copy size={14} />
+                        <span>Скопировать ссылку</span>
                       </button>
 
                       <button
@@ -442,7 +429,7 @@ export default function DevicesScreen() {
                       Нет подключенных устройств
                     </p>
                     <p className="text-xs text-txt2 mt-1 max-w-xs mx-auto">
-                      Импортируйте ссылку подписки в приложение Happ на любом вашем устройстве
+                      Импортируйте ссылку в приложение на любом вашем устройстве
                     </p>
                   </GlassCard>
                 </motion.div>
@@ -451,6 +438,12 @@ export default function DevicesScreen() {
           )}
         </StaggerGroup>
       </PullToRefresh>
+
+      {/* Copy Link Modal with Main & Fallback URLs */}
+      <CopyLinkModal
+        isOpen={copyOpen}
+        onClose={() => setCopyOpen(false)}
+      />
 
       {/* QR Code Modal */}
       <BottomSheet
@@ -474,11 +467,14 @@ export default function DevicesScreen() {
           </div>
 
           <button
-            onClick={handleCopy}
+            onClick={() => {
+              setQrOpen(false);
+              setCopyOpen(true);
+            }}
             className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20"
           >
             <Copy size={14} />
-            <span>Скопировать прямую ссылку</span>
+            <span>Скопировать ссылку</span>
           </button>
         </div>
       </BottomSheet>

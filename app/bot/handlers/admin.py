@@ -63,10 +63,12 @@ def _admin_menu():
     markup = inline_keyboard(
         [
             [("📊 Аналитика", "admin:stats", "primary"), ("💰 Финансы", "admin:finance", "success")],
-            [("👥 Пользователи", "admin:users"), ("🧾 Заказы", "admin:orders")],
+            [("📋 Задачи", "admin:tasks", "primary"), ("🔎 Глобальный поиск", "admin:search")],
             [("📦 Тарифы и цены", "admin:plans", "primary"), ("🎁 Выдать VPN", "admin:grant", "success")],
             [("🔄 Синхр. тарифы", "admin:syncplans", "primary"), ("🔌 Интеграция", "admin:integration")],
             [("🎟 Промокоды", "admin:promos", "primary"), ("📣 Рассылка", "admin:broadcast", "danger")],
+            [("📣 Кампании", "admin:campaigns", "primary"), ("🧾 Аудит действий", "admin:audit")],
+            [("🩺 Здоровье", "admin:health"), ("📤 Экспорт CSV", "admin:export")],
             [("⬅️ В меню", "menu:open")],
         ]
     )
@@ -82,24 +84,6 @@ def _admin_menu():
             ],
         )
         insert_at += 1
-    markup.inline_keyboard.insert(
-        insert_at,
-        [
-            InlineKeyboardButton(
-                text="Очередь заказов",
-                callback_data="admin:orders2:all:0",
-            )
-        ],
-    )
-    markup.inline_keyboard.insert(
-        insert_at + 1,
-        [
-            InlineKeyboardButton(
-                text="Сегменты пользователей",
-                callback_data="admin:users2:all:0",
-            )
-        ],
-    )
     return markup
 
 
@@ -116,6 +100,29 @@ async def admin_menu(callback: CallbackQuery, state: FSMContext, session: AsyncS
         callback, await _admin_dashboard_text(session), reply_markup=_admin_menu()
     )
     await callback.answer()
+
+
+@router.callback_query(F.data.in_({"admin:tasks", "admin:search", "admin:campaigns", "admin:audit", "admin:health", "admin:export"}))
+async def admin_feature_shortcut(callback: CallbackQuery) -> None:
+    labels = {
+        "admin:tasks": "Задачи",
+        "admin:search": "Глобальный поиск",
+        "admin:campaigns": "Кампании",
+        "admin:audit": "Аудит действий",
+        "admin:health": "Здоровье сервисов",
+        "admin:export": "Экспорт CSV",
+    }
+    text = f"<b>{labels[callback.data]}</b> доступен в полноценной админке Mini App."
+    if settings.telegram_miniapp_url:
+        await callback.message.answer(
+            text,
+            reply_markup=inline_keyboard([[InlineKeyboardButton(
+                text="Открыть админку", web_app=WebAppInfo(url=settings.telegram_miniapp_url)
+            )]]),
+        )
+        await callback.answer()
+    else:
+        await callback.answer("Укажите TELEGRAM_MINIAPP_URL в настройках", show_alert=True)
 
 
 async def _admin_dashboard_text(session: AsyncSession) -> str:
