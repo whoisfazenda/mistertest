@@ -22,7 +22,7 @@ def main_menu(*, is_admin: bool = False, show_trial: bool = False) -> InlineKeyb
     ]
     if show_trial:
         rows.append([("💎 Пробный период 7 дней", "trial:claim", "primary")])
-    rows.append([("💡 Помощь", "help:open"), ("💬 Поддержка", "support:open")])
+    rows.append([("💡 Помощь", "help:open")])
     if is_admin:
         rows.append([("🛠 Админ-панель", "admin:menu", "danger")])
     return inline_keyboard(rows)
@@ -44,7 +44,7 @@ def referral_keyboard(link: str) -> InlineKeyboardMarkup:
 
 def support_keyboard() -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = []
-    rows.append([make_url_button("💬 Написать в поддержку", settings.support_url or SUPPORT_URL)])
+    rows.append([make_url_button("💬 Написать в поддержку", "https://t.me/mistervpnsup_bot")])
     rows.append([make_button("⬅️ В меню", "menu:open")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -53,7 +53,7 @@ def help_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [make_url_button("📢 Новостной канал", "https://t.me/mistervpn_news")],
-            [make_url_button("💬 Поддержка", settings.support_url or SUPPORT_URL)],
+            [make_url_button("💬 Поддержка", "https://t.me/mistervpnsup_bot")],
             [make_button("📲 Инструкция по подключению", "help:connect", "primary")],
             [make_button("⬅️ В меню", "menu:open")],
         ]

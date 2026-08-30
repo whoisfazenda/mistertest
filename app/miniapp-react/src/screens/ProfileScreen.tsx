@@ -23,7 +23,6 @@ import { useAppStore } from '../store/useAppStore';
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const user = useAppStore((s) => s.user);
-  const config = useAppStore((s) => s.config);
   const refresh = useAppStore((s) => s.refresh);
 
   const [topupOpen, setTopupOpen] = useState(false);
@@ -31,7 +30,7 @@ export default function ProfileScreen() {
 
   const openSupport = () => {
     haptic('light');
-    openLink(config?.supportUrl || 'https://t.me/mistervpnsup_bot');
+    openLink('https://t.me/mistervpnsup_bot');
   };
 
   return (

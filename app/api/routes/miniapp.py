@@ -440,7 +440,9 @@ async def miniapp_bootstrap(
     settings_repo = SettingsRepository(session)
     app_settings = await settings_repo.get_all()
     app_name = app_settings.get("app_name") or "Mister VPN"
-    support_url = app_settings.get("support_url") or settings.support_url
+    support_url = app_settings.get("support_url") or settings.support_url or "https://t.me/mistervpnsup_bot"
+    if not support_url or "misterfvpn_bot" in support_url:
+        support_url = "https://t.me/mistervpnsup_bot"
     channel_url = app_settings.get("channel_url") or "https://t.me/misterfvpn_channel"
     currency = app_settings.get("currency") or settings.currency
     min_topup = float(app_settings.get("min_topup") or settings.min_balance_topup or 50.0)

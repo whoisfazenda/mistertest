@@ -6,12 +6,34 @@ type Notification = 'error' | 'success' | 'warning';
 
 export const tg = WebApp;
 
+export function openTelegramLink(url: string): void {
+  try {
+    if (tg && typeof (tg as any).openTelegramLink === 'function') {
+      (tg as any).openTelegramLink(url);
+      return;
+    }
+  } catch {
+    /* fallback */
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 export function openLink(url: string): void {
   try {
-    tg.openLink(url);
+    if (url.startsWith('https://t.me/') || url.startsWith('tg://')) {
+      if (tg && typeof (tg as any).openTelegramLink === 'function') {
+        (tg as any).openTelegramLink(url);
+        return;
+      }
+    }
+    if (tg && typeof tg.openLink === 'function') {
+      tg.openLink(url);
+      return;
+    }
   } catch {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    /* fallback */
   }
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 export function initTelegram(): void {
