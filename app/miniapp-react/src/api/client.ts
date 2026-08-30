@@ -264,7 +264,7 @@ function normalize(raw: Record<string, any>): BootstrapData {
       : null,
     config: {
       appName: raw.config?.app_name ?? 'Mister VPN',
-      supportUrl: raw.config?.support_url ?? 'https://t.me/misterfvpn_bot',
+      supportUrl: raw.config?.support_url ?? 'https://t.me/mistervpnsup_bot',
       channelUrl: raw.config?.channel_url ?? 'https://t.me/misterfvpn_channel',
       currency: raw.config?.currency ?? 'RUB',
       minTopup: Number(raw.config?.min_topup ?? 100),

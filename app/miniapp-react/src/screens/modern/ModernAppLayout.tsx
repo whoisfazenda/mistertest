@@ -100,7 +100,7 @@ export function ModernAppLayout() {
 
         {/* Bottom Help */}
         <a
-          href={config?.supportUrl || 'https://t.me/misterfvpn_bot'}
+          href={config?.supportUrl || 'https://t.me/mistervpnsup_bot'}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-2 text-xs text-[#475569] hover:text-[#0f172a] p-2"

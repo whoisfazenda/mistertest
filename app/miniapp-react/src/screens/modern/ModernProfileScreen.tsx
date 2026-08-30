@@ -78,7 +78,7 @@ export function ModernProfileScreen({ onNavigateTab }: ModernProfileScreenProps)
         </div>
 
         <a
-          href={config?.supportUrl || 'https://t.me/misterfvpn_bot'}
+          href={config?.supportUrl || 'https://t.me/mistervpnsup_bot'}
           target="_blank"
           rel="noreferrer"
           className="flex items-center justify-between p-4 rounded-2xl bg-white/80 backdrop-blur-md shadow-xs border border-white/60 cursor-pointer hover:bg-white transition-all text-decoration-none"

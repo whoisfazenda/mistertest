@@ -31,11 +31,7 @@ export default function ProfileScreen() {
 
   const openSupport = () => {
     haptic('light');
-    if (config?.supportUrl) {
-      openLink(config.supportUrl);
-    } else {
-      openLink('https://t.me/misterfvpn_bot');
-    }
+    openLink(config?.supportUrl || 'https://t.me/mistervpnsup_bot');
   };
 
   return (

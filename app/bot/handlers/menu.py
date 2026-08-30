@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from aiogram import F, Router
-from aiogram.filters import CommandStart
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -87,6 +87,13 @@ async def open_connect(callback: CallbackQuery) -> None:
 
     await replace_with_text_screen(callback, texts.CONNECT_GUIDE, reply_markup=connect_guide_keyboard())
     await callback.answer()
+
+
+@router.message(Command("support"))
+async def cmd_support(message: Message) -> None:
+    from app.bot.keyboards.menus import support_keyboard
+
+    await message.answer(texts.SUPPORT, reply_markup=support_keyboard())
 
 
 @router.callback_query(F.data == "support:open")

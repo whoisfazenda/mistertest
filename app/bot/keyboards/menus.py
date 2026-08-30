@@ -13,7 +13,7 @@ from app.core.config import settings
 from app.db.models.subscription import VPNSubscription
 from aiogram.types import InlineKeyboardButton
 
-SUPPORT_URL = "https://t.me/misterfvpn_bot"
+SUPPORT_URL = "https://t.me/mistervpnsup_bot"
 
 
 def main_menu(*, is_admin: bool = False, show_trial: bool = False) -> InlineKeyboardMarkup:
@@ -22,7 +22,7 @@ def main_menu(*, is_admin: bool = False, show_trial: bool = False) -> InlineKeyb
     ]
     if show_trial:
         rows.append([("💎 Пробный период 7 дней", "trial:claim", "primary")])
-    rows.append([("💡 Помощь", "help:open")])
+    rows.append([("💡 Помощь", "help:open"), ("💬 Поддержка", "support:open")])
     if is_admin:
         rows.append([("🛠 Админ-панель", "admin:menu", "danger")])
     return inline_keyboard(rows)
