@@ -80,6 +80,34 @@ export function CopyLinkModal({ isOpen, onClose }: CopyLinkModalProps) {
 
             {/* Content */}
             <div className="py-4 space-y-3.5">
+              {/* Subscription UUID */}
+              {subscription?.uuid && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-txt3">ID подписки (UUID)</span>
+                    <span className="text-[10px] font-semibold text-zinc-400">AdaptGroup</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 bg-black/50 rounded-xl p-2.5 border border-white/5">
+                    <span className="font-mono text-[11px] text-zinc-300 truncate select-all">{subscription.uuid}</span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(subscription.uuid);
+                          hapticNotify('success');
+                          showAlert('ID подписки скопирован!');
+                        } catch {
+                          prompt('ID подписки:', subscription.uuid);
+                        }
+                      }}
+                      className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors shrink-0"
+                      title="Скопировать ID"
+                    >
+                      <Copy size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Main Link */}
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
