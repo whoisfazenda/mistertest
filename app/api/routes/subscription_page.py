@@ -94,12 +94,35 @@ def _e(val: Any) -> str:
 
 
 def _is_browser_request(request: Request) -> bool:
-    accept = request.headers.get("accept", "").lower()
+    if request.query_params.get("web") == "1":
+        return True
+    if request.query_params.get("raw") == "1":
+        return False
+
     ua = request.headers.get("user-agent", "").lower()
-    vpn_clients = ("happ", "incy", "v2ray", "sing-box", "clash", "karing", "streisand", "shadowrocket", "v2box", "nekobox", "sagernet")
+    accept = request.headers.get("accept", "").lower()
+
+    vpn_clients = (
+        "happ", "incy", "v2ray", "sing-box", "clash", "karing",
+        "streisand", "shadowrocket", "v2box", "nekobox", "sagernet",
+        "wireguard", "amnezia", "outline", "foxray", "loon", "surge",
+        "quantumult", "stash", "hiddify", "flclash", "curl", "wget",
+        "okhttp", "cfnetwork", "go-http-client", "dart", "python",
+        "vless", "trojan", "ss", "v2raytun",
+    )
     if any(vc in ua for vc in vpn_clients):
         return False
-    return "text/html" in accept or "mozilla" in ua or "safari" in ua or "chrome" in ua
+
+    sec_dest = request.headers.get("sec-fetch-dest", "").lower()
+    sec_mode = request.headers.get("sec-fetch-mode", "").lower()
+    if sec_dest == "document" and sec_mode == "navigate":
+        return True
+
+    is_standard_browser = ("mozilla" in ua or "safari" in ua or "chrome" in ua) and "text/html" in accept
+    if is_standard_browser:
+        return True
+
+    return False
 
 
 @router.get("/s/{subscription_uuid}", response_class=HTMLResponse)
@@ -175,26 +198,39 @@ async def proxy_subscription(request: Request, subscription_uuid: str) -> Respon
     )
     try:
         async with httpx.AsyncClient(
-            timeout=httpx.Timeout(20.0, connect=5.0),
+            timeout=httpx.Timeout(25.0, connect=7.0),
             follow_redirects=True,
         ) as client:
             upstream = await client.get(upstream_url, headers=request_headers)
-        if upstream.status_code >= 400:
-            return RedirectResponse(upstream_url, status_code=307)
-    except (httpx.HTTPError, ValueError):
-        return RedirectResponse(upstream_url, status_code=307)
+        if upstream.status_code < 400:
+            response_headers = {
+                name: upstream.headers[name]
+                for name in _PASSTHROUGH_HEADERS
+                if name in upstream.headers
+            }
+            response_headers["Cache-Control"] = "private, no-store"
+            return Response(
+                content=upstream.content,
+                status_code=upstream.status_code,
+                headers=response_headers,
+            )
+    except Exception:
+        pass
 
-    response_headers = {
-        name: upstream.headers[name]
-        for name in _PASSTHROUGH_HEADERS
-        if name in upstream.headers
-    }
-    response_headers["Cache-Control"] = "private, no-store"
-    return Response(
-        content=upstream.content,
-        status_code=upstream.status_code,
-        headers=response_headers,
-    )
+    # Fallback to direct fetch
+    try:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            upstream = await client.get(direct_url)
+            if upstream.status_code < 400:
+                return Response(
+                    content=upstream.content,
+                    status_code=upstream.status_code,
+                    headers={"Content-Type": upstream.headers.get("content-type", "text/plain; charset=utf-8")},
+                )
+    except Exception:
+        pass
+
+    raise HTTPException(status_code=502, detail="Не удалось загрузить конфигурацию подписки. Попробуйте позже.")
 
 
 @router.get("/{subscription_uuid}")

@@ -2,11 +2,15 @@ import {
   Activity,
   ArrowLeft,
   Crown,
+  Copy,
   Edit2,
+  ExternalLink,
+  Globe,
   Plus,
   RefreshCw,
   Search,
   Send,
+  Shield,
   Tag,
   Sliders,
   Users,
@@ -775,6 +779,78 @@ export function AdminScreen() {
                       <p className="font-mono text-sm font-bold text-white">{u.balance} ₽</p>
                     </div>
                   </div>
+
+                  {/* User Subscription Info & Links */}
+                  {u.subscription ? (
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-2 text-left">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Shield size={13} className="text-emerald-400 shrink-0" />
+                          <span className="text-xs font-bold text-white truncate">
+                            {u.subscription.planName || 'VPN Подписка'}
+                          </span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          u.subscription.isActive && !u.subscription.isExpired
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : u.subscription.isFrozen
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-red-500/20 text-red-300'
+                        }`}>
+                          {u.subscription.isFrozen ? 'Заморожена' : u.subscription.isActive && !u.subscription.isExpired ? `${u.subscription.daysLeft ?? 0} дн.` : 'Истекла'}
+                        </span>
+                      </div>
+
+                      {/* Subscription ID / UUID with copy button */}
+                      <div className="flex items-center justify-between gap-2 bg-black/40 rounded-lg p-2 border border-white/5">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[9px] uppercase font-bold text-txt3">ID подписки (AdaptGroup UUID)</div>
+                          <div className="font-mono text-[11px] text-zinc-300 truncate select-all">{u.subscription.uuid}</div>
+                        </div>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await navigator.clipboard.writeText(u.subscription?.uuid || '');
+                              hapticNotify('success');
+                              showAlert('ID подписки скопирован!');
+                            } catch {
+                              prompt('ID подписки:', u.subscription?.uuid);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors shrink-0"
+                          title="Скопировать ID"
+                        >
+                          <Copy size={13} />
+                        </button>
+                      </div>
+
+                      {/* Working direct links */}
+                      <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                        <a
+                          href={u.subscription.publicUrl || `https://sub.misterv.site/${u.subscription.uuid}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] py-1.5 px-2 text-[10px] font-bold text-sky-300 hover:bg-sky-500/10 hover:border-sky-500/30 transition-all text-decoration-none"
+                        >
+                          <Globe size={11} />
+                          <span className="truncate">Основная ссылка</span>
+                          <ExternalLink size={9} className="shrink-0 opacity-70" />
+                        </a>
+                        <a
+                          href={u.subscription.directUrl || `https://network-api.adaptgroup.app/sub/${u.subscription.uuid}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] py-1.5 px-2 text-[10px] font-bold text-amber-300 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all text-decoration-none"
+                        >
+                          <ExternalLink size={11} />
+                          <span className="truncate">AdaptGroup API</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-txt3 italic py-0.5">Нет активной подписки</div>
+                  )}
 
                   <div className="flex gap-2 pt-1 border-t border-white/[0.06]">
                     <button

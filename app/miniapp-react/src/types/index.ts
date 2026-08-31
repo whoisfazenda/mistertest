@@ -165,6 +165,7 @@ export interface AdminUser {
   lastActivityAt?: string;
   adminNote?: string;
   adminTags?: string[];
+  subscription?: Subscription | null;
 }
 
 export interface AdminPlan {

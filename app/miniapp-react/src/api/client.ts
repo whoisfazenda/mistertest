@@ -484,9 +484,32 @@ export async function getAdminUsers(page: number = 1, search: string = ''): Prom
       hasActiveSubscription: Boolean(u.has_active_subscription ?? (u.subscription && u.subscription.is_active)),
       trialClaimed: Boolean(u.trial_claimed),
       createdAt: String(u.created_at ?? ''),
-      lastActivityAt: u.last_activity_at ? String(u.last_activity_at) : undefined,
       adminNote: u.admin_note,
       adminTags: Array.isArray(u.admin_tags) ? u.admin_tags : [],
+      subscription: u.subscription
+        ? {
+            id: u.subscription.id,
+            uuid: u.subscription.uuid,
+            planUuid: u.subscription.plan_uuid,
+            planName: u.subscription.plan_name,
+            isActive: Boolean(u.subscription.is_active),
+            isFrozen: Boolean(u.subscription.is_frozen),
+            isExpired: Boolean(u.subscription.is_expired),
+            isTrial: Boolean(u.subscription.is_trial),
+            startsAt: u.subscription.starts_at,
+            expiresAt: u.subscription.expires_at,
+            daysLeft: u.subscription.days_left,
+            devicesUsed: u.subscription.device_count,
+            devicesMax: u.subscription.max_devices,
+            trafficLimitBytes: u.subscription.traffic_limit_bytes,
+            trafficUsedBytes: u.subscription.traffic_used_bytes,
+            subscriptionUrl: u.subscription.subscription_url,
+            publicUrl: u.subscription.public_url || u.subscription.subscription_url,
+            directUrl: u.subscription.direct_url,
+            fallbackUrl: u.subscription.fallback_url,
+            managementUrl: u.subscription.management_url,
+          }
+        : null,
     })),
   };
 }
