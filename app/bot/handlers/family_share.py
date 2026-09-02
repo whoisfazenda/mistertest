@@ -51,7 +51,9 @@ async def open_family_menu(
 
     total = summary["total_slots"]
     used_dev = summary["used_devices"]
-    active_shares = summary["active_shares_count"]
+    owner_dev = summary.get("owner_devices", used_dev)
+    conn_shares = summary.get("connected_shares_count", 0)
+    pending_shares = summary.get("pending_shares_count", 0)
     avail = summary["available_slots"]
     plan_name = summary.get("plan_name", "Mister VPN")
 
@@ -63,10 +65,13 @@ async def open_family_menu(
         "",
         f"Тариф: <b>{escape(plan_name)}</b>",
         f"Всего слотов в тарифе: <b>{total}</b>",
-        f"Ваших активных устройств: <b>{used_dev}</b>",
-        f"Роздано семейных слотов: <b>{active_shares}</b>",
-        f"Доступно для шеринга: <b>{avail}</b>",
+        f"Ваших активных устройств: <b>{owner_dev}</b>",
     ]
+    if conn_shares > 0:
+        lines.append(f"Подключено семейных устройств: <b>{conn_shares}</b>")
+    if pending_shares > 0:
+        lines.append(f"Ожидает подключения по инвайту: <b>{pending_shares}</b>")
+    lines.append(f"Свободно для шеринга: <b>{avail}</b>")
 
     rows = []
     shares = summary.get("shares", [])

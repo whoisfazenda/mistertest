@@ -41,6 +41,7 @@ class FamilyShareService:
 
         # Fetch active devices from AdaptGroup if client is available
         device_count = 0
+        devices: list[dict[str, Any]] = []
         if self.client:
             try:
                 sub_service = SubscriptionService(self.session, self.client)
@@ -52,8 +53,23 @@ class FamilyShareService:
         all_shares = await self.shares_repo.list_for_owner(owner_user_id)
         active_shares = [s for s in all_shares if s.status == "active"]
 
-        # Reserve at least 1 slot for owner's primary device
-        available_slots = max(0, max_devices - len(active_shares) - 1)
+        # Check how many active shares already have a device registered in AdaptGroup
+        active_device_ids = {str(d.get("id") or "") for d in devices if isinstance(d, dict)}
+        connected_shares_count = sum(
+            1 for s in active_shares
+            if s.bound_device_id and str(s.bound_device_id) in active_device_ids
+        )
+        # Pending shares that haven't connected a device yet reserve 1 slot each
+        pending_shares_count = max(0, len(active_shares) - connected_shares_count)
+
+        # Total occupied slots = connected devices + pending share reservations
+        total_occupied = device_count + pending_shares_count
+
+        # If user has 0 devices connected, reserve at least 1 slot for owner's primary device
+        owner_reservation = 1 if device_count == 0 else 0
+
+        # Available free slots for sharing
+        available_slots = max(0, max_devices - total_occupied - owner_reservation)
 
         bot_username = "misterfvpn_bot"
         sub_base = (settings.subscription_base_url or "https://sub.misterv.site").rstrip("/")
@@ -79,6 +95,9 @@ class FamilyShareService:
             "plan_name": sub.plan_name or "Mister VPN",
             "total_slots": max_devices,
             "used_devices": device_count,
+            "owner_devices": max(0, device_count - connected_shares_count),
+            "connected_shares_count": connected_shares_count,
+            "pending_shares_count": pending_shares_count,
             "active_shares_count": len(active_shares),
             "available_slots": available_slots,
             "shares": serialized_shares,
