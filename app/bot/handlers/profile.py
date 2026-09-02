@@ -168,6 +168,8 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         rows.append([("🛒 Купить основной тариф", "buy:list", "success")])
     else:
         rows[0].append(("♻️ Продлить", f"renew:menu:{sub.subscription_uuid}", "success"))
+    if user.is_admin:
+        rows.append([("👨‍👩‍👧‍👦 Семейный доступ", "family:menu", "primary")])
     if sub.is_frozen:
         rows.append([("▶️ Разморозить", f"freeze:unfreeze:{sub.subscription_uuid}", "primary")])
     else:
@@ -337,6 +339,8 @@ async def _render_profile_devices(
                 )
         text = "\n".join(lines)
         _device_tokens.setdefault(user.telegram_id, {})[token] = tokens
+        if user.is_admin:
+            rows.append([("👨‍👩‍👧‍👦 Семейный доступ", "family:menu", "primary")])
         rows.append([("⬅️ К подписке", f"profile:sub:{token}")])
     await replace_with_text_screen(callback, text, reply_markup=inline_keyboard(rows))
 

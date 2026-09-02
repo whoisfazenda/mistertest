@@ -38,10 +38,14 @@ async def list_devices(callback: CallbackQuery, session: AsyncSession, user: Use
         return
 
     if not devices:
+        empty_rows = []
+        if user.is_admin:
+            empty_rows.append([("👨‍👩‍👧‍👦 Семейный доступ", "family:menu", "primary")])
+        empty_rows.append([("⬅️ К подпискам", "profile:subs")])
         await replace_with_text_screen(
             callback,
             f"{pe('devices')} <b>Мои устройства</b>\n\nПодключённых устройств пока нет.",
-            reply_markup=inline_keyboard([[("⬅️ К подпискам", "profile:subs")]]),
+            reply_markup=inline_keyboard(empty_rows),
         )
         await callback.answer()
         return
@@ -59,6 +63,8 @@ async def list_devices(callback: CallbackQuery, session: AsyncSession, user: Use
         )
         rows.append([(f"🗑 Удалить «{dev['name'][:20]}»", f"devices:del:{token}", "danger")])
     _device_tokens[user.telegram_id] = tokens
+    if user.is_admin:
+        rows.append([("👨‍👩‍👧‍👦 Семейный доступ", "family:menu", "primary")])
     rows.append([("⬅️ К подпискам", "profile:subs")])
 
     if sub.max_devices:

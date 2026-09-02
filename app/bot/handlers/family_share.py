@@ -87,7 +87,7 @@ async def open_family_menu(
     else:
         lines.append("<i>Все слоты заняты. Чтобы добавить ещё людей, отзовите ненужный слот.</i>")
 
-    rows.append([("⬅️ Назад в Мой VPN", "myvpn:open")])
+    rows.append([("⬅️ К подпискам", "profile:subs"), ("⬅️ В меню", "menu:open")])
 
     await replace_with_text_screen(callback, "\n".join(lines), reply_markup=inline_keyboard(rows))
     await callback.answer()
