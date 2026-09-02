@@ -240,7 +240,7 @@ async def confirm_revoke_slot(
 
 @router.callback_query(F.data.startswith("family:delok:"))
 async def do_revoke_slot(
-    callback: CallbackQuery, session: AsyncSession, user: User
+    callback: CallbackQuery, session: AsyncSession, user: User, state: FSMContext
 ) -> None:
     share_id = int(callback.data.split(":", 2)[2])
     service = FamilyShareService(session, get_client())
@@ -251,4 +251,4 @@ async def do_revoke_slot(
         await callback.answer(friendly_error(exc), show_alert=True)
 
     # Return to menu
-    await open_family_menu(callback, session, user, FSMContext)
+    await open_family_menu(callback, session, user, state)

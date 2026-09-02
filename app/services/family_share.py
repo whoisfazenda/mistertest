@@ -7,7 +7,7 @@ import httpx
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients.adaptgroup import AdaptGroupClient
+from app.clients.adaptgroup import AdaptGroupVPNClient
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models.family_share import FamilySlotShare
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 
 class FamilyShareService:
-    def __init__(self, session: AsyncSession, client: AdaptGroupClient | None = None) -> None:
+    def __init__(self, session: AsyncSession, client: AdaptGroupVPNClient | None = None) -> None:
         self.session = session
         self.client = client
         self.shares_repo = FamilyShareRepository(session)
