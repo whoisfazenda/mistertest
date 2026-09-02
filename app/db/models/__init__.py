@@ -7,6 +7,7 @@ from app.db.models.admin_operations import (
     BroadcastTemplate,
     CampaignDelivery,
 )
+from app.db.models.family_share import FamilySlotShare
 from app.db.models.order import Order
 from app.db.models.notification import UserNotification
 from app.db.models.plan import VPNPlanSnapshot
@@ -23,6 +24,7 @@ __all__ = [
     "AdminTask",
     "BroadcastTemplate",
     "CampaignDelivery",
+    "FamilySlotShare",
     "Order",
     "SupportTicket",
     "PromoCode",

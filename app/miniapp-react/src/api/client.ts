@@ -6,6 +6,8 @@ import type {
   AdminSettings,
   ConnectionLog,
   Device,
+  FamilySlotShare,
+  FamilySlotsSummary,
   Order,
   Plan,
   ReferralInfo,
@@ -21,6 +23,8 @@ export type {
   AdminSettings,
   ConnectionLog,
   Device,
+  FamilySlotShare,
+  FamilySlotsSummary,
   Order,
   Plan,
   ReferralInfo,
@@ -713,4 +717,58 @@ export async function updateAdminSettings(settings: Partial<AdminSettings>): Pro
     referralRewardPercent: Number(raw.referral_reward_percent ?? 15),
   };
 }
+
+export async function getFamilySlotsSummary(): Promise<FamilySlotsSummary> {
+  const raw = await request<Record<string, any>>('/miniapp/api/family-share/slots');
+  return {
+    hasSubscription: Boolean(raw.has_subscription),
+    subscriptionUuid: raw.subscription_uuid,
+    planName: raw.plan_name,
+    totalSlots: Number(raw.total_slots ?? 0),
+    usedDevices: Number(raw.used_devices ?? 0),
+    activeSharesCount: Number(raw.active_shares_count ?? 0),
+    availableSlots: Number(raw.available_slots ?? 0),
+    shares: (raw.shares ?? []).map((s: any) => ({
+      id: Number(s.id),
+      token: String(s.token),
+      label: String(s.label),
+      status: s.status === 'revoked' ? 'revoked' : 'active',
+      claimedByTelegramId: s.claimed_by_telegram_id != null ? Number(s.claimed_by_telegram_id) : undefined,
+      claimedByUsername: s.claimed_by_username ? String(s.claimed_by_username) : undefined,
+      claimedAt: s.claimed_at,
+      createdAt: s.created_at,
+      inviteBotUrl: String(s.invite_bot_url),
+      inviteDirectUrl: String(s.invite_direct_url),
+    })),
+  };
+}
+
+export async function createFamilySlot(label: string): Promise<{
+  ok: boolean;
+  id: number;
+  token: string;
+  label: string;
+  inviteBotUrl: string;
+  inviteDirectUrl: string;
+}> {
+  const res = await request<any>('/miniapp/api/family-share/slots', {
+    method: 'POST',
+    body: JSON.stringify({ label }),
+  });
+  return {
+    ok: Boolean(res.ok),
+    id: Number(res.id),
+    token: String(res.token),
+    label: String(res.label),
+    inviteBotUrl: String(res.invite_bot_url),
+    inviteDirectUrl: String(res.invite_direct_url),
+  };
+}
+
+export async function revokeFamilySlot(shareId: number): Promise<{ ok: boolean }> {
+  return await request(`/miniapp/api/family-share/slots/${shareId}`, {
+    method: 'DELETE',
+  });
+}
+
 

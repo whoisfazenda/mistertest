@@ -1,4 +1,4 @@
-"""repositories package."""
+from app.repositories.family_shares import FamilyShareRepository
 from app.repositories.orders import OrderRepository
 from app.repositories.plans import PlanRepository
 from app.repositories.settings import SettingsRepository
@@ -7,6 +7,7 @@ from app.repositories.users import UserRepository
 from app.repositories.webhook_events import WebhookEventRepository
 
 __all__ = [
+    "FamilyShareRepository",
     "OrderRepository",
     "PlanRepository",
     "SettingsRepository",

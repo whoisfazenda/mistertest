@@ -214,3 +214,27 @@ export interface AdminSettings {
   referralBonusRub: number;
   referralRewardPercent: number;
 }
+
+export interface FamilySlotShare {
+  id: number;
+  token: string;
+  label: string;
+  status: 'active' | 'revoked';
+  claimedByTelegramId?: number | null;
+  claimedByUsername?: string | null;
+  claimedAt?: string | null;
+  createdAt?: string | null;
+  inviteBotUrl: string;
+  inviteDirectUrl: string;
+}
+
+export interface FamilySlotsSummary {
+  hasSubscription: boolean;
+  subscriptionUuid?: string;
+  planName?: string;
+  totalSlots: number;
+  usedDevices: number;
+  activeSharesCount: number;
+  availableSlots: number;
+  shares: FamilySlotShare[];
+}

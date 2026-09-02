@@ -47,6 +47,7 @@ from app.services.admin_operations import has_scope, is_admin_role, write_audit
 from app.services.orders import OrderService
 from app.services.payments.factory import get_payment_provider
 from app.services.plans import PlanService
+from app.services.family_share import FamilyShareService
 from app.services.subscriptions import (
     SubscriptionService,
     public_subscription_url,
@@ -585,6 +586,66 @@ async def delete_device(
             session, request.app.state.adaptgroup_client
         ).delete_device(sub, device_id)
     )
+    return {"ok": True}
+
+
+class CreateFamilySlotBody(BaseModel):
+    label: str = "Семейный слот"
+
+
+@router.get("/miniapp/api/family-share/slots")
+async def get_family_slots(
+    request: Request,
+    identity: MiniAppIdentity = Depends(get_miniapp_identity),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    user = await _current_user(session, identity)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Семейный доступ пока доступен только для администратора")
+    service = FamilyShareService(session, request.app.state.adaptgroup_client)
+    return await service.get_family_slots_summary(user.id)
+
+
+@router.post("/miniapp/api/family-share/slots")
+async def create_family_slot(
+    body: CreateFamilySlotBody,
+    request: Request,
+    identity: MiniAppIdentity = Depends(get_miniapp_identity),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    user = await _current_user(session, identity)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Семейный доступ пока доступен только для администратора")
+    service = FamilyShareService(session, request.app.state.adaptgroup_client)
+    try:
+        share = await service.create_slot(user.id, body.label)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {
+        "ok": True,
+        "id": share.id,
+        "token": share.token,
+        "label": share.label,
+        "invite_bot_url": f"https://t.me/misterfvpn_bot?start=fshare_{share.token}",
+        "invite_direct_url": f"https://sub.misterv.site/share/{share.token}",
+    }
+
+
+@router.delete("/miniapp/api/family-share/slots/{share_id}")
+async def revoke_family_slot(
+    share_id: int,
+    request: Request,
+    identity: MiniAppIdentity = Depends(get_miniapp_identity),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    user = await _current_user(session, identity)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Семейный доступ пока доступен только для администратора")
+    service = FamilyShareService(session, request.app.state.adaptgroup_client)
+    try:
+        await service.revoke_slot(user.id, share_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
     return {"ok": True}
 
 

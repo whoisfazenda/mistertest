@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import {
   AlertCircle,
   Apple,
+  Check,
   Copy,
   Download,
   ExternalLink,
@@ -9,10 +10,13 @@ import {
   Monitor,
   Phone,
   QrCode,
+  Share2,
   Smartphone,
   Trash2,
+  UserPlus,
+  Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BottomSheet } from '../components/BottomSheet';
 import { GlassCard, StaggerGroup } from '../components/GlassCard';
 import { HeroBanner } from '../components/HeroBanner';
@@ -22,6 +26,7 @@ import { CopyLinkModal } from '../components/CopyLinkModal';
 import { staggerItem } from '../lib/format';
 import { haptic, hapticNotify, openLink, showAlert } from '../lib/telegram';
 import { useAppStore } from '../store/useAppStore';
+import type { FamilySlotsSummary } from '../types';
 import * as api from '../api/client';
 
 interface GuideApp {
@@ -143,6 +148,8 @@ const GUIDES: Record<'ios' | 'android' | 'windows' | 'mac', { label: string; ico
 };
 
 export default function DevicesScreen() {
+  const user = useAppStore((s) => s.user);
+  const isAdmin = Boolean(user?.isAdmin);
   const devices = useAppStore((s) => s.devices);
   const subscription = useAppStore((s) => s.subscription);
   const refresh = useAppStore((s) => s.refresh);
@@ -152,6 +159,36 @@ export default function DevicesScreen() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
+
+  // Family Sharing State (Admin only)
+  const [familySummary, setFamilySummary] = useState<FamilySlotsSummary | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [slotLabel, setSlotLabel] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createdInvite, setCreatedInvite] = useState<{ label: string; botUrl: string; directUrl: string } | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [revokingId, setRevokingId] = useState<number | null>(null);
+
+  const loadFamilySlots = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const data = await api.getFamilySlotsSummary();
+      setFamilySummary(data);
+    } catch (e) {
+      console.error('Failed to load family slots', e);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    void loadFamilySlots();
+  }, [loadFamilySlots]);
+
+  const onRefreshAll = async () => {
+    await refresh();
+    if (isAdmin) {
+      await loadFamilySlots();
+    }
+  };
 
   const subUrl = subscription?.subscriptionUrl || subscription?.publicUrl || '';
 
@@ -164,7 +201,7 @@ export default function DevicesScreen() {
       await api.deleteDevice(deviceId);
       hapticNotify('success');
       showAlert('✅ Устройство успешно удалено. Слот освобождён.');
-      await refresh();
+      await onRefreshAll();
     } catch (e) {
       hapticNotify('error');
       showAlert(e instanceof Error ? e.message : 'Не удалось удалить устройство');
@@ -175,7 +212,7 @@ export default function DevicesScreen() {
 
   return (
     <Screen>
-      <PullToRefresh onRefresh={refresh}>
+      <PullToRefresh onRefresh={onRefreshAll}>
         <StaggerGroup className="space-y-4 pt-1">
           {/* Hero Banner */}
           <motion.div variants={staggerItem}>
@@ -376,6 +413,145 @@ export default function DevicesScreen() {
           {/* DEVICES TAB */}
           {activeTab === 'devices' && (
             <>
+              {/* Family Sharing Section (Admin only) */}
+              {isAdmin && (
+                <motion.div variants={staggerItem} className="space-y-3 pb-2">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-violet-400" />
+                      <h3 className="font-bold text-sm text-white">Семейный доступ</h3>
+                      <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[9px] font-extrabold text-violet-300 border border-violet-500/30">
+                        Admin Beta
+                      </span>
+                    </div>
+                    {familySummary && (
+                      <span className="text-xs font-medium text-txt2">
+                        Свободно: <b className="text-emerald-400">{familySummary.availableSlots}</b> из {familySummary.totalSlots}
+                      </span>
+                    )}
+                  </div>
+
+                  <GlassCard className="p-4 space-y-3.5 border-violet-500/20 bg-gradient-to-b from-violet-950/20 to-black/40">
+                    <p className="text-xs text-zinc-300 leading-relaxed">
+                      Вы можете выделить отдельный слот своего тарифа для члена семьи или друга (строго на 1 устройство).
+                    </p>
+
+                    {/* Slots Summary Stats */}
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+                        <span className="text-[10px] font-semibold text-txt3 uppercase block">Всего</span>
+                        <span className="font-bold text-sm text-white">{familySummary?.totalSlots || subscription?.devicesMax || 1}</span>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+                        <span className="text-[10px] font-semibold text-txt3 uppercase block">Ваших девайсов</span>
+                        <span className="font-bold text-sm text-white">{devices.length}</span>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+                        <span className="text-[10px] font-semibold text-txt3 uppercase block">Роздано</span>
+                        <span className="font-bold text-sm text-violet-300">{familySummary?.activeSharesCount || 0}</span>
+                      </div>
+                    </div>
+
+                    {/* Active Shares List */}
+                    {familySummary && familySummary.shares.filter((s) => s.status === 'active').length > 0 && (
+                      <div className="space-y-2 pt-1 border-t border-white/[0.08]">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-txt3 block">
+                          Активные семейные инвайты:
+                        </span>
+                        {familySummary.shares
+                          .filter((s) => s.status === 'active')
+                          .map((share) => (
+                            <div
+                              key={share.id}
+                              className="flex items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-black/40 p-3"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-xs text-white truncate">{share.label}</span>
+                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap ${
+                                    share.claimedByUsername ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                  }`}>
+                                    {share.claimedByUsername ? `@${share.claimedByUsername}` : 'Ожидает'}
+                                  </span>
+                                </div>
+                                <span className="font-mono text-[10px] text-zinc-400 truncate block mt-0.5">
+                                  {share.inviteBotUrl}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(share.inviteBotUrl);
+                                      hapticNotify('success');
+                                      showAlert('Ссылка скопирована!');
+                                    } catch {
+                                      prompt('Ссылка для шеринга:', share.inviteBotUrl);
+                                    }
+                                  }}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-white hover:bg-white/[0.12]"
+                                  title="Скопировать ссылку"
+                                >
+                                  <Copy size={13} />
+                                </button>
+
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm(`Отозвать слот «${share.label}»? Устройство потеряет доступ.`)) return;
+                                    try {
+                                      setRevokingId(share.id);
+                                      await api.revokeFamilySlot(share.id);
+                                      hapticNotify('success');
+                                      showAlert('Слот отозван!');
+                                      await loadFamilySlots();
+                                    } catch (e) {
+                                      showAlert(e instanceof Error ? e.message : 'Ошибка отзыва слота');
+                                    } finally {
+                                      setRevokingId(null);
+                                    }
+                                  }}
+                                  disabled={revokingId === share.id}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                                  title="Отозвать слот"
+                                >
+                                  {revokingId === share.id ? (
+                                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                                  ) : (
+                                    <Trash2 size={13} />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Button to share a slot */}
+                    <button
+                      onClick={() => {
+                        haptic('light');
+                        setSlotLabel('');
+                        setCreatedInvite(null);
+                        setCreateModalOpen(true);
+                      }}
+                      disabled={familySummary ? familySummary.availableSlots <= 0 : false}
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 font-bold text-xs text-white shadow-md transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <UserPlus size={15} />
+                      <span>{familySummary && familySummary.availableSlots > 0 ? 'Поделиться свободным слотом' : 'Все слоты заняты'}</span>
+                    </button>
+                  </GlassCard>
+                </motion.div>
+              )}
+
+              {/* Subheading for personal devices */}
+              {isAdmin && devices.length > 0 && (
+                <div className="px-1 pt-2 pb-1">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-txt3">Ваши подключенные устройства:</h4>
+                </div>
+              )}
+
               {devices.length > 0 ? (
                 devices.map((d) => (
                   <motion.div key={d.id} variants={staggerItem}>
@@ -438,6 +614,137 @@ export default function DevicesScreen() {
           )}
         </StaggerGroup>
       </PullToRefresh>
+
+      {/* Create Family Slot BottomSheet */}
+      <BottomSheet
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Поделиться слотом"
+      >
+        <div className="py-3 space-y-4">
+          {!createdInvite ? (
+            <>
+              <p className="text-xs text-txt2 leading-relaxed">
+                Выберите или введите имя того, с кем делитесь слотом (например, «Мама», «Друг»):
+              </p>
+
+              {/* Quick Tags */}
+              <div className="flex flex-wrap gap-1.5">
+                {['Мама', 'Папа', 'Вторая половинка', 'Друг', 'Ноутбук', 'Планшет'].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      haptic('light');
+                      setSlotLabel(tag);
+                    }}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold border transition-all ${
+                      slotLabel === tag
+                        ? 'border-violet-400 bg-violet-500/20 text-white'
+                        : 'border-white/10 bg-white/[0.04] text-txt2 hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                value={slotLabel}
+                onChange={(e) => setSlotLabel(e.target.value)}
+                placeholder="Имя получателя (например, Мама)"
+                className="w-full h-11 rounded-xl border border-white/15 bg-black/40 px-3.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-violet-400"
+              />
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (creating) return;
+                  setCreating(true);
+                  try {
+                    const res = await api.createFamilySlot(slotLabel.trim() || 'Семейный слот');
+                    hapticNotify('success');
+                    setCreatedInvite({
+                      label: res.label,
+                      botUrl: res.inviteBotUrl,
+                      directUrl: res.inviteDirectUrl,
+                    });
+                    await loadFamilySlots();
+                  } catch (e) {
+                    hapticNotify('error');
+                    showAlert(e instanceof Error ? e.message : 'Не удалось создать слот');
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+                disabled={creating}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white text-black font-bold text-xs transition-all hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-50"
+              >
+                {creating ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                ) : (
+                  <>
+                    <Share2 size={15} />
+                    <span>Создать ссылку-приглашение</span>
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <div className="space-y-3.5 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 mx-auto">
+                <Check size={24} />
+              </div>
+
+              <div>
+                <h4 className="font-bold text-white text-sm">Слот «{createdInvite.label}» готов!</h4>
+                <p className="text-xs text-txt2 mt-0.5">
+                  Отправьте ссылку человеку. Он сможет настроить 1 устройство в Telegram или приложении.
+                </p>
+              </div>
+
+              <div className="font-mono text-[11px] text-zinc-300 bg-black/50 rounded-xl p-2.5 break-all border border-white/10 select-all text-left">
+                {createdInvite.botUrl}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(createdInvite.botUrl);
+                      setCopiedLink(true);
+                      hapticNotify('success');
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    } catch {
+                      prompt('Скопируйте ссылку:', createdInvite.botUrl);
+                    }
+                  }}
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.06] text-white font-bold text-xs"
+                >
+                  {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  <span>{copiedLink ? 'Скопировано!' : 'Копировать'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = encodeURIComponent(
+                      `Привет! Я делюсь с тобой быстрым Mister VPN на 1 устройство.\nПодключись по ссылке:\n${createdInvite.botUrl}`
+                    );
+                    openLink(`https://t.me/share/url?url=${encodeURIComponent(createdInvite.botUrl)}&text=${text}`);
+                  }}
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-white text-black font-bold text-xs"
+                >
+                  <Share2 size={14} />
+                  <span>В Telegram</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </BottomSheet>
 
       {/* Copy Link Modal with Main & Fallback URLs */}
       <CopyLinkModal

@@ -21,12 +21,58 @@ from app.db.models.user import User
 from app.repositories.subscriptions import SubscriptionRepository
 from app.repositories.users import UserRepository
 
+from app.bot.deps import get_client
+from app.services.family_share import FamilyShareService
+from app.utils.formatting import escape
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 router = Router(name="menu")
 
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext, session: AsyncSession, user: User) -> None:
     await state.clear()
+    text_parts = (message.text or "").split(maxsplit=1)
+    if len(text_parts) == 2 and text_parts[1].startswith("fshare_"):
+        token = text_parts[1][7:]
+        service = FamilyShareService(session, get_client())
+        share = await service.claim_slot(token, message.from_user.id, message.from_user.username)
+        if share is None or share.status != "active":
+            await message.answer(
+                "⚠️ <b>Ссылка семейного доступа недействительна</b>\n\n"
+                "Срок действия ссылки истёк или доступ был отозван владельцем."
+            )
+            return
+
+        sub_base = (settings.subscription_base_url or "https://sub.misterv.site").rstrip("/")
+        direct_share_url = f"{sub_base}/share/{share.token}"
+        owner_name = share.owner.first_name if share.owner else "Владелец"
+
+        try:
+            if share.owner and share.owner.telegram_id:
+                claimant = f"@{message.from_user.username}" if message.from_user.username else (message.from_user.first_name or "Пользователь")
+                await message.bot.send_message(
+                    share.owner.telegram_id,
+                    f"🔔 <b>Семейный слот активирован!</b>\n\n"
+                    f"Пользователь <b>{escape(claimant)}</b> подключился к слоту <b>«{escape(share.label)}»</b>."
+                )
+        except Exception:
+            pass
+
+        welcome_text = (
+            f"🎉 <b>Добро пожаловать в Mister VPN!</b>\n\n"
+            f"Пользователь <b>{escape(owner_name)}</b> открыл вам доступ к семейному VPN-слоту (<b>{escape(share.label)}</b>).\n\n"
+            "Вы можете подключить 1 устройство. Нажмите кнопку ниже, чтобы открыть и скопировать ключ подключения:"
+        )
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="🌐 Открыть подключение", url=direct_share_url)],
+                [InlineKeyboardButton(text="📲 Инструкция по настройке", callback_data="help:connect")],
+            ]
+        )
+        await message.answer(welcome_text, reply_markup=kb)
+        return
+
     await _apply_referral_start(message, session, user)
     await answer_photo_screen(
         message,

@@ -6,6 +6,7 @@ from app.bot.handlers import (
     balance,
     buy,
     devices,
+    family_share,
     menu,
     my_vpn,
     profile,
@@ -20,6 +21,7 @@ def get_main_router() -> Router:
     root = Router(name="root")
     # Admin first so its filters take precedence for admin users.
     root.include_router(admin.router)
+    root.include_router(family_share.router)
     root.include_router(menu.router)
     root.include_router(balance.router)
     root.include_router(profile.router)

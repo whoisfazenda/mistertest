@@ -80,7 +80,7 @@ def connect_guide_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def my_vpn_keyboard(sub: VPNSubscription) -> InlineKeyboardMarkup:
+def my_vpn_keyboard(sub: VPNSubscription, is_admin: bool = False) -> InlineKeyboardMarkup:
     rows: list[list] = []
     rows.append([make_button("🔗 Получить ссылку", "myvpn:link", "primary")])
     if sub.is_trial:
@@ -93,6 +93,8 @@ def my_vpn_keyboard(sub: VPNSubscription) -> InlineKeyboardMarkup:
             ]
         )
     rows.append([make_button("📱 Мои устройства", "devices:list")])
+    if is_admin:
+        rows.append([make_button("👨‍👩‍👧‍👦 Семейный доступ", "family:menu", "primary")])
     # Traffic top-up only for limited plans.
     if not sub.is_unlimited_traffic:
         rows.append([make_button("⚡ Докупить трафик", "traffic:menu", "primary")])

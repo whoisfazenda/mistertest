@@ -23,6 +23,7 @@ from app.clients.adaptgroup import _first
 from app.db.database import async_session_factory
 from app.db.models.subscription import VPNSubscription
 from app.repositories.subscriptions import SubscriptionRepository
+from app.services.family_share import FamilyShareService
 from app.services.subscriptions import (
     SubscriptionService,
     public_subscription_url,
@@ -46,6 +47,7 @@ RESERVED_ROOT_PATHS = {
     "s",
     "sub",
     "subscription",
+    "share",
 }
 
 _PASSTHROUGH_HEADERS = (
@@ -231,6 +233,29 @@ async def proxy_subscription(request: Request, subscription_uuid: str) -> Respon
         pass
 
     raise HTTPException(status_code=502, detail="Не удалось загрузить конфигурацию подписки. Попробуйте позже.")
+
+
+@router.get("/share/{token}")
+@router.get("/sub/share/{token}")
+async def shared_slot_route(request: Request, token: str) -> Response:
+    """Serve configuration for a shared family slot."""
+    async with async_session_factory() as session:
+        service = FamilyShareService(session, request.app.state.adaptgroup_client)
+        configs = await service.get_slot_configs(token)
+        if configs is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Семейный слот не найден, отозван или срок действия подписки истёк",
+            )
+
+    return Response(
+        content=configs,
+        status_code=200,
+        headers={
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "private, no-store",
+        },
+    )
 
 
 @router.get("/{subscription_uuid}")
