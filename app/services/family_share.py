@@ -136,15 +136,37 @@ class FamilyShareService:
 
         share.status = "revoked"
 
-        # If we have client and bound device, delete it from upstream
-        if self.client and share.subscription and share.bound_device_id:
-            try:
-                await self.client.delete_device(
-                    share.subscription.subscription_uuid,
-                    share.bound_device_id,
-                )
-            except Exception as exc:
-                logger.warning("Failed to delete device on slot revoke: %s", exc)
+        # If we have client, ensure the device is deleted from upstream
+        if self.client and share.subscription:
+            sub_uuid = share.subscription.subscription_uuid
+            if share.bound_device_id:
+                try:
+                    await self.client.delete_device(sub_uuid, str(share.bound_device_id))
+                except Exception as exc:
+                    logger.warning("Failed to delete device on slot revoke: %s", exc)
+            else:
+                # If bound_device_id was not explicitly stored, find any device added after share was created
+                try:
+                    devices = await self.client.get_devices(sub_uuid)
+                    for d in devices:
+                        first_seen_str = d.get("first_seen")
+                        if first_seen_str and share.created_at:
+                            try:
+                                fs_dt = datetime.fromisoformat(str(first_seen_str).replace("Z", "+00:00"))
+                                if fs_dt.tzinfo is None:
+                                    fs_dt = fs_dt.replace(tzinfo=timezone.utc)
+                                sh_dt = share.created_at
+                                if sh_dt.tzinfo is None:
+                                    sh_dt = sh_dt.replace(tzinfo=timezone.utc)
+                                if fs_dt >= sh_dt:
+                                    dev_id = str(d.get("id") or "")
+                                    if dev_id:
+                                        await self.client.delete_device(sub_uuid, dev_id)
+                                        break
+                            except Exception:
+                                pass
+                except Exception as exc:
+                    logger.warning("Error auto-detecting device on revoke: %s", exc)
 
         await self.session.commit()
         return True
