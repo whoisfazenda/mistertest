@@ -30,7 +30,7 @@ class FamilyShareState(StatesGroup):
 
 
 def _is_admin(user: User) -> bool:
-    return settings.is_admin(user.telegram_id)
+    return user.is_admin
 
 
 @router.callback_query(F.data == "family:menu")

@@ -79,7 +79,7 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession, 
         MAIN_IMAGE,
         await _main_text(session, user),
         reply_markup=main_menu(
-            is_admin=settings.is_admin(user.telegram_id),
+            is_admin=user.is_admin,
             show_trial=not user.trial_claimed,
         ),
     )
@@ -112,7 +112,7 @@ async def open_menu(callback: CallbackQuery, state: FSMContext, session: AsyncSe
         MAIN_IMAGE,
         await _main_text(session, user),
         reply_markup=main_menu(
-            is_admin=settings.is_admin(user.telegram_id),
+            is_admin=user.is_admin,
             show_trial=not user.trial_claimed,
         ),
     )

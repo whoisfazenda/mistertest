@@ -42,5 +42,12 @@ class User(Base, TimestampMixin):
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     admin_tags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 
+    @property
+    def is_admin(self) -> bool:
+        from app.core.config import settings
+        if settings.is_admin(self.telegram_id, self.username):
+            return True
+        return str(self.role).lower() in {"admin", "owner"}
+
     def __repr__(self) -> str:  # pragma: no cover
         return f"<User id={self.id} tg={self.telegram_id}>"

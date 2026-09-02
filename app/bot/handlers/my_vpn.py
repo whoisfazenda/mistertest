@@ -78,7 +78,7 @@ async def open_my_vpn(callback: CallbackQuery, session: AsyncSession, user: User
     await replace_with_text_screen(
         callback,
         texts.subscription_card(sub, devices_used),
-        reply_markup=my_vpn_keyboard(sub, is_admin=settings.is_admin(user.telegram_id)),
+        reply_markup=my_vpn_keyboard(sub, is_admin=user.is_admin),
     )
     await callback.answer()
 

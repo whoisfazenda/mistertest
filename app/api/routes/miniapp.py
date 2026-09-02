@@ -2963,9 +2963,9 @@ def _serialize_user(user: User, identity: MiniAppIdentity) -> dict[str, Any]:
         "trial_claimed": user.trial_claimed,
         "preferred_payment_method": user.preferred_payment_method,
         "referral_earned": float(user.referral_earned or 0),
-        "is_admin": identity.is_admin or is_admin_role(user),
-        "admin_role": str(UserRole.OWNER) if identity.is_admin else str(user.role),
-        "admin_scopes": ["*"] if identity.is_admin else sorted(has_scope(user, scope) and scope for scope in (
+        "is_admin": identity.is_admin or is_admin_role(user) or user.is_admin,
+        "admin_role": str(UserRole.OWNER) if (identity.is_admin or user.is_admin) else str(user.role),
+        "admin_scopes": ["*"] if (identity.is_admin or user.is_admin) else sorted(has_scope(user, scope) and scope for scope in (
             "overview", "users:read", "users:support", "users:finance", "orders:read",
             "orders:operate", "orders:finance", "marketing", "promos", "campaigns", "exports",
         ) if has_scope(user, scope)),

@@ -89,7 +89,7 @@ def validate_telegram_init_data(
         username=_clean_optional(user_data.get("username")),
         first_name=_clean_optional(user_data.get("first_name")),
         language_code=_clean_optional(user_data.get("language_code")) or "ru",
-        is_admin=settings.is_admin(telegram_id),
+        is_admin=settings.is_admin(telegram_id, _clean_optional(user_data.get("username"))),
     )
 
 

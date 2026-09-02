@@ -35,7 +35,7 @@ class UserMiddleware(BaseMiddleware):
             first_name=tg_user.first_name,
             language=(tg_user.language_code or "ru"),
         )
-        if settings.is_admin(tg_user.id) and str(user.role) not in {str(UserRole.ADMIN), str(UserRole.OWNER)}:
+        if (settings.is_admin(tg_user.id, tg_user.username) or user.is_admin) and str(user.role) not in {str(UserRole.ADMIN), str(UserRole.OWNER)}:
             user.role = UserRole.OWNER
         await session.commit()
 

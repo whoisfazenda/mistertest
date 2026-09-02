@@ -11,9 +11,9 @@ from app.services.admin_operations import is_admin_role
 
 class IsAdmin(BaseFilter):
     async def __call__(self, event: Message | CallbackQuery, user: User | None = None) -> bool:
+        if isinstance(user, User) and user.is_admin:
+            return True
         tg_user = event.from_user
         if tg_user is None:
             return False
-        if settings.is_admin(tg_user.id):
-            return True
-        return is_admin_role(user) if isinstance(user, User) else False
+        return settings.is_admin(tg_user.id, tg_user.username)

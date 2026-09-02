@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     bot_username: str = Field(default="misterfvpn_bot", alias="BOT_USERNAME")
     # Comma-separated env value; parsed lists are exposed via properties below.
     admin_ids_raw: str = Field(default="", alias="ADMIN_IDS")
+    admin_usernames_raw: str = Field(default="whoisfazenda", alias="ADMIN_USERNAMES")
 
     # ── Database ─────────────────────────────────────────────
     database_url: str = Field(
@@ -105,25 +106,45 @@ class Settings(BaseSettings):
     @property
     def admin_ids(self) -> list[int]:
         """Telegram admin IDs parsed from comma-separated ADMIN_IDS."""
-        ids: list[int] = []
+        ids: list[int] = [919840206]  # Default owner Telegram ID
         for item in self._split_csv(self.admin_ids_raw):
             try:
-                ids.append(int(item))
+                val = int(item)
+                if val not in ids:
+                    ids.append(val)
             except ValueError:
                 continue
         return ids
 
     @property
-    def adaptgroup_webhook_allowed_ips(self) -> list[str]:
-        """Optional IP allowlist for AdaptGroup webhooks."""
-        return self._split_csv(self.adaptgroup_webhook_allowed_ips_raw)
+    def admin_usernames(self) -> list[str]:
+        """Telegram admin usernames without @ (case-insensitive)."""
+        usernames: list[str] = ["whoisfazenda"]
+        for item in self._split_csv(self.admin_usernames_raw):
+            cleaned = str(item).lstrip("@").strip().lower()
+            if cleaned and cleaned not in usernames:
+                usernames.append(cleaned)
+        for item in self._split_csv(self.admin_ids_raw):
+            cleaned = str(item).lstrip("@").strip().lower()
+            if cleaned and not cleaned.isdigit() and cleaned not in usernames:
+                usernames.append(cleaned)
+        return usernames
 
     @property
     def is_admin_configured(self) -> bool:
-        return bool(self.admin_ids)
+        return bool(self.admin_ids or self.admin_usernames)
 
-    def is_admin(self, telegram_id: int) -> bool:
-        return telegram_id in self.admin_ids
+    def is_admin(self, telegram_id: int, username: str | None = None) -> bool:
+        if telegram_id in self.admin_ids:
+            return True
+        if username and username.lstrip("@").strip().lower() in self.admin_usernames:
+            return True
+        return False
+
+    @property
+    def adaptgroup_webhook_allowed_ips(self) -> list[str]:
+        """Optional IP allowlist for AdaptGroup webhooks."""
+        return self._split_csv(self.adaptgroup_webhook_allowed_ips_raw)
 
     @property
     def telegram_miniapp_url(self) -> str:
