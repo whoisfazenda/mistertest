@@ -154,22 +154,28 @@ async def custom_slot_label(
     bot_user = await message.bot.get_me()
     bot_username = bot_user.username or "misterfvpn_bot"
     invite_url = f"https://t.me/{bot_username}?start=fshare_{share.token}"
+    sub_base = (settings.subscription_base_url or "https://sub.misterv.site").rstrip("/")
+    direct_share_url = f"{sub_base}/share/{share.token}"
 
     share_text = urllib.parse.quote(
         f"Привет! Я делюсь с тобой быстрым Mister VPN на 1 устройство.\n"
-        f"Нажми на ссылку ниже, чтобы подключиться за 1 минуту:\n{invite_url}"
+        f"Подключись по ссылке:\n{direct_share_url}"
     )
     tg_share_link = f"https://t.me/share/url?url={invite_url}&text={share_text}"
 
     text = (
         f"🎉 <b>Слот «{escape(share.label)}» успешно создан!</b>\n\n"
-        "Отправьте эту ссылку тому, с кем хотите поделиться:\n"
+        "Отправьте ссылку тому, с кем хотите поделиться:\n\n"
+        f"🌐 <b>Ссылка на VPN (скопировать и вставить в Happ / Incy или открыть в браузере):</b>\n"
+        f"<code>{direct_share_url}</code>\n\n"
+        f"✈️ <b>Либо приглашение через Telegram-бота:</b>\n"
         f"<code>{invite_url}</code>\n\n"
-        "<i>Ссылка рассчитана на 1 устройство. Вы в любой момент можете отозвать доступ в разделе «Семейный доступ».</i>"
+        "<i>Слот рассчитан на 1 устройство. Вы в любой момент можете отозвать доступ.</i>"
     )
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📤 Отправить в Telegram", url=tg_share_link)],
+            [InlineKeyboardButton(text="📤 Поделиться в Telegram", url=tg_share_link)],
+            [InlineKeyboardButton(text="🌐 Открыть страницу слота", url=direct_share_url)],
             [InlineKeyboardButton(text="⬅️ В Семейный доступ", callback_data="family:menu")],
         ]
     )
@@ -194,22 +200,28 @@ async def _create_and_show_invite(
     bot_user = await callback.bot.get_me()
     bot_username = bot_user.username or "misterfvpn_bot"
     invite_url = f"https://t.me/{bot_username}?start=fshare_{share.token}"
+    sub_base = (settings.subscription_base_url or "https://sub.misterv.site").rstrip("/")
+    direct_share_url = f"{sub_base}/share/{share.token}"
 
     share_text = urllib.parse.quote(
         f"Привет! Я делюсь с тобой быстрым Mister VPN на 1 устройство.\n"
-        f"Нажми на ссылку ниже, чтобы подключиться за 1 минуту:\n{invite_url}"
+        f"Подключись по ссылке:\n{direct_share_url}"
     )
     tg_share_link = f"https://t.me/share/url?url={invite_url}&text={share_text}"
 
     text = (
         f"🎉 <b>Слот «{escape(share.label)}» успешно создан!</b>\n\n"
-        "Отправьте эту ссылку тому, с кем хотите поделиться:\n"
+        "Отправьте ссылку тому, с кем хотите поделиться:\n\n"
+        f"🌐 <b>Ссылка на VPN (скопировать и вставить в Happ / Incy или открыть в браузере):</b>\n"
+        f"<code>{direct_share_url}</code>\n\n"
+        f"✈️ <b>Либо приглашение через Telegram-бота:</b>\n"
         f"<code>{invite_url}</code>\n\n"
-        "<i>Ссылка рассчитана строго на 1 устройство. Вы в любой момент сможете отозвать доступ в разделе «Семейный доступ».</i>"
+        "<i>Слот рассчитан на 1 устройство. Вы в любой момент можете отозвать доступ.</i>"
     )
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📤 Отправить в Telegram", url=tg_share_link)],
+            [InlineKeyboardButton(text="📤 Поделиться в Telegram", url=tg_share_link)],
+            [InlineKeyboardButton(text="🌐 Открыть страницу слота", url=direct_share_url)],
             [InlineKeyboardButton(text="⬅️ В Семейный доступ", callback_data="family:menu")],
         ]
     )

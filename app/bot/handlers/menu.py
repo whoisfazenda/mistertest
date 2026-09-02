@@ -62,12 +62,15 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession, 
         welcome_text = (
             f"🎉 <b>Добро пожаловать в Mister VPN!</b>\n\n"
             f"Пользователь <b>{escape(owner_name)}</b> открыл вам доступ к семейному VPN-слоту (<b>{escape(share.label)}</b>).\n\n"
-            "Вы можете подключить 1 устройство. Нажмите кнопку ниже, чтобы открыть и скопировать ключ подключения:"
+            f"🔗 <b>Ваша ссылка для подключения (нажмите, чтобы скопировать):</b>\n"
+            f"<code>{direct_share_url}</code>\n\n"
+            "Вы можете вставить эту ссылку в приложение <b>Happ</b> или <b>Incy</b>, либо воспользоваться кнопками ниже:"
         )
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="🌐 Открыть подключение", url=direct_share_url)],
-                [InlineKeyboardButton(text="📲 Инструкция по настройке", callback_data="help:connect")],
+                [InlineKeyboardButton(text="📲 Подключить в Happ", url=f"happ://add/{direct_share_url}")],
+                [InlineKeyboardButton(text="🌐 Страница подключения", url=direct_share_url)],
+                [InlineKeyboardButton(text="📖 Инструкция по настройке", callback_data="help:connect")],
             ]
         )
         await message.answer(welcome_text, reply_markup=kb)

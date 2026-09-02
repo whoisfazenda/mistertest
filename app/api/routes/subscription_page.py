@@ -129,7 +129,13 @@ def _is_browser_request(request: Request) -> bool:
 
 @router.get("/s/{subscription_uuid}", response_class=HTMLResponse)
 @router.get("/subscription/{subscription_uuid}", response_class=HTMLResponse)
-async def subscription_page(request: Request, subscription_uuid: str) -> HTMLResponse:
+async def subscription_page(
+    request: Request,
+    subscription_uuid: str,
+    *,
+    shared_token: str | None = None,
+    slot_label: str | None = None,
+) -> HTMLResponse:
     deleted = request.query_params.get("deleted") == "1"
     error = request.query_params.get("error") or ""
     
@@ -157,7 +163,17 @@ async def subscription_page(request: Request, subscription_uuid: str) -> HTMLRes
             if not error:
                 error = "Не удалось загрузить устройства. Попробуйте позже."
 
-    return HTMLResponse(_render_page(sub, devices, deleted=deleted, error=error, base_url=base_url))
+    return HTMLResponse(
+        _render_page(
+            sub,
+            devices,
+            deleted=deleted,
+            error=error,
+            base_url=base_url,
+            shared_token=shared_token,
+            slot_label=slot_label,
+        )
+    )
 
 
 @router.post("/s/{subscription_uuid}/devices/{device_id}/delete")
@@ -238,24 +254,33 @@ async def proxy_subscription(request: Request, subscription_uuid: str) -> Respon
 @router.get("/share/{token}")
 @router.get("/sub/share/{token}")
 async def shared_slot_route(request: Request, token: str) -> Response:
-    """Serve configuration for a shared family slot."""
+    """Serve configuration or web landing page for a shared family slot."""
     async with async_session_factory() as session:
         service = FamilyShareService(session, request.app.state.adaptgroup_client)
-        configs = await service.get_slot_configs(token)
-        if configs is None:
+        share = await service.shares_repo.get_by_token(token)
+        if share is None or share.status != "active":
             raise HTTPException(
                 status_code=404,
                 detail="Семейный слот не найден, отозван или срок действия подписки истёк",
             )
+        sub = share.subscription
+        if sub is None or not sub.is_effectively_active:
+            raise HTTPException(
+                status_code=404,
+                detail="Подписка владельца не найдена или неактивна",
+            )
+        subscription_uuid = sub.subscription_uuid
+        slot_label = share.label
 
-    return Response(
-        content=configs,
-        status_code=200,
-        headers={
-            "Content-Type": "text/plain; charset=utf-8",
-            "Cache-Control": "private, no-store",
-        },
-    )
+    if _is_browser_request(request):
+        return await subscription_page(
+            request,
+            subscription_uuid,
+            shared_token=token,
+            slot_label=slot_label,
+        )
+
+    return await proxy_subscription(request, subscription_uuid)
 
 
 @router.get("/{subscription_uuid}")
@@ -302,13 +327,18 @@ def _render_page(
     deleted: bool = False,
     error: str = "",
     base_url: str = "",
+    shared_token: str | None = None,
+    slot_label: str | None = None,
 ) -> str:
-    sub_url = public_subscription_url(sub.subscription_uuid)
-    if base_url:
-        if "sub." in base_url.lower():
-            sub_url = f"{base_url.rstrip('/')}/{quote(sub.subscription_uuid, safe='')}"
-        else:
-            sub_url = f"{base_url.rstrip('/')}/sub/{quote(sub.subscription_uuid, safe='')}"
+    if shared_token:
+        sub_url = f"{base_url.rstrip('/')}/share/{quote(shared_token, safe='')}"
+    else:
+        sub_url = public_subscription_url(sub.subscription_uuid)
+        if base_url:
+            if "sub." in base_url.lower():
+                sub_url = f"{base_url.rstrip('/')}/{quote(sub.subscription_uuid, safe='')}"
+            else:
+                sub_url = f"{base_url.rstrip('/')}/sub/{quote(sub.subscription_uuid, safe='')}"
 
     status = (
         "Истекла"
@@ -320,14 +350,17 @@ def _render_page(
         else "Неактивна"
     )
     
-    plan_name = sub.plan_name or "Mister Unlimited VIP"
-    if sub.is_trial:
+    if slot_label:
+        plan_name = f"Семейный доступ · {slot_label}"
+    elif sub.is_trial:
         plan_name = "Пробный период (3 дня)"
+    else:
+        plan_name = sub.plan_name or "Mister Unlimited VIP"
         
     expires_str = format_date(sub.expires_at) if sub.expires_at else "Бессрочно"
     
-    used_devices = len(devices)
-    max_devices = sub.max_devices or 5
+    used_devices = min(1, len(devices)) if shared_token else len(devices)
+    max_devices = 1 if shared_token else (sub.max_devices or 5)
     
     traffic_used_gb = "0.0"
     if sub.traffic_used_bytes:
@@ -355,25 +388,28 @@ def _render_page(
 <body><h1>Mister VPN</h1><p>Подписка: {sub_url}</p></body>
 </html>"""
 
-    # Device list rendering
-    device_rows = []
-    for d in devices:
-        d_id = d.get("id") or d.get("device_id") or ""
-        d_name = d.get("name") or d.get("device_model") or "Устройство"
-        d_ip = d.get("ip") or "Недавно"
-        d_seen = d.get("last_seen") or "Активно"
-        del_form = f'''<form method="POST" action="/s/{quote(sub.subscription_uuid)}/devices/{quote(str(d_id))}/delete" style="margin:0;">
-            <button type="submit" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;">Отключить</button>
-        </form>'''
-        device_rows.append(f'''<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);margin-bottom:8px;">
-            <div>
-                <div style="font-weight:700;font-size:13px;color:#fff;">{_e(d_name)}</div>
-                <div style="font-size:11px;color:#8e8e9a;font-family:monospace;margin-top:2px;">IP: {_e(d_ip)} · {_e(d_seen)}</div>
-            </div>
-            {del_form}
-        </div>''')
+    if shared_token:
+        devices_html = '<div style="text-align:center;padding:16px;color:#8e8e9a;font-size:12px;">Слот закреплен строго за вашим устройством</div>'
+    else:
+        # Device list rendering
+        device_rows = []
+        for d in devices:
+            d_id = d.get("id") or d.get("device_id") or ""
+            d_name = d.get("name") or d.get("device_model") or "Устройство"
+            d_ip = d.get("ip") or "Недавно"
+            d_seen = d.get("last_seen") or "Активно"
+            del_form = f'''<form method="POST" action="/s/{quote(sub.subscription_uuid)}/devices/{quote(str(d_id))}/delete" style="margin:0;">
+                <button type="submit" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;">Отключить</button>
+            </form>'''
+            device_rows.append(f'''<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);margin-bottom:8px;">
+                <div>
+                    <div style="font-weight:700;font-size:13px;color:#fff;">{_e(d_name)}</div>
+                    <div style="font-size:11px;color:#8e8e9a;font-family:monospace;margin-top:2px;">IP: {_e(d_ip)} · {_e(d_seen)}</div>
+                </div>
+                {del_form}
+            </div>''')
 
-    devices_html = "".join(device_rows) if device_rows else '<div style="text-align:center;padding:20px;color:#8e8e9a;font-size:12px;">Пока нет подключенных устройств</div>'
+        devices_html = "".join(device_rows) if device_rows else '<div style="text-align:center;padding:20px;color:#8e8e9a;font-size:12px;">Пока нет подключенных устройств</div>'
 
     # Dynamic replacements
     html_text = html_text.replace("{{integration_name}}", "Mister VPN")
