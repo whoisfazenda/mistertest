@@ -122,21 +122,7 @@ async def rollypay_webhook(request: Request) -> Response:
             await session.commit()
 
         outcome = await order_service.provision(order)
-        if bot is not None and (outcome.provisioned or outcome.already_done):
-            try:
-                text = "✅ Оплата получена. VPN активирован."
-                if outcome.subscription:
-                    sub = outcome.subscription
-                    public_url = public_subscription_url(sub.subscription_uuid)
-                    backup_url = upstream_subscription_url(
-                        sub.subscription_uuid, sub.subscription_url
-                    )
-                    text += f"\n\nОсновная ссылка:\n<code>{public_url}</code>"
-                    if backup_url != public_url:
-                        text += f"\n\nРезервная ссылка:\n<code>{backup_url}</code>"
-                await bot.send_message(order.user.telegram_id, text)
-            except Exception as exc:  # noqa: BLE001
-                logger.info("Could not notify user about RollyPay payment: %s", exc)
+        await _send_order_success_notification(bot, order, outcome)
 
     return Response(status_code=200)
 
@@ -180,23 +166,53 @@ async def platega_webhook(request: Request) -> Response:
             await session.commit()
 
         outcome = await order_service.provision(order)
-        if bot is not None and (outcome.provisioned or outcome.already_done):
-            try:
-                text = "✅ Оплата получена! Ваш VPN успешно активирован."
-                if outcome.subscription:
-                    sub = outcome.subscription
-                    public_url = public_subscription_url(sub.subscription_uuid)
-                    backup_url = upstream_subscription_url(
-                        sub.subscription_uuid, sub.subscription_url
-                    )
-                    text += f"\n\nОсновная ссылка:\n<code>{public_url}</code>"
-                    if backup_url != public_url:
-                        text += f"\n\nРезервная ссылка:\n<code>{backup_url}</code>"
-                await bot.send_message(order.user.telegram_id, text)
-            except Exception as exc:  # noqa: BLE001
-                logger.info("Could not notify user about Platega payment: %s", exc)
+        await _send_order_success_notification(bot, order, outcome)
 
     return Response(status_code=200)
+
+
+async def _send_order_success_notification(bot, order, outcome) -> None:
+    """Send accurate confirmation message to the user based on order type."""
+    if bot is None or not (outcome.provisioned or outcome.already_done):
+        return
+    try:
+        from app.core.enums import OrderType
+
+        tg_id = order.user.telegram_id
+
+        if order.order_type == OrderType.BALANCE_TOPUP:
+            text = (
+                f"💰 <b>Баланс успешно пополнен!</b>\n\n"
+                f"Сумма: <b>+{float(order.amount):.2f} {order.currency}</b>\n"
+                f"Текущий баланс: <b>{float(order.user.balance or 0):.2f} {order.user.balance_currency}</b>"
+            )
+            await bot.send_message(tg_id, text)
+            return
+
+        if order.order_type == OrderType.RENEW_SUBSCRIPTION:
+            text = "✅ <b>Оплата получена!</b> Ваша подписка успешно продлена."
+            await bot.send_message(tg_id, text)
+            return
+
+        if order.order_type == OrderType.TRAFFIC_TOPUP:
+            text = "✅ <b>Оплата получена!</b> Дополнительный трафик успешно добавлен к вашей подписке."
+            await bot.send_message(tg_id, text)
+            return
+
+        # NEW_SUBSCRIPTION or other
+        text = "✅ <b>Оплата получена!</b> Ваш VPN успешно активирован."
+        if outcome.subscription:
+            sub = outcome.subscription
+            public_url = public_subscription_url(sub.subscription_uuid)
+            backup_url = upstream_subscription_url(
+                sub.subscription_uuid, sub.subscription_url
+            )
+            text += f"\n\nОсновная ссылка:\n<code>{public_url}</code>"
+            if backup_url != public_url:
+                text += f"\n\nРезервная ссылка:\n<code>{backup_url}</code>"
+        await bot.send_message(tg_id, text)
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Could not notify user about payment: %s", exc)
 
 
 @router.get("/health")
