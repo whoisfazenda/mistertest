@@ -62,8 +62,9 @@ class RollyPayProvider(PaymentProvider):
             "description": description,
             "metadata": {"idempotency_key": idempotency_key},
         }
-        if settings.rollypay_payment_method:
-            payload["payment_method"] = settings.rollypay_payment_method
+        effective_method = payment_method or settings.rollypay_payment_method
+        if effective_method:
+            payload["payment_method"] = effective_method
         if settings.rollypay_terminal_id:
             payload["terminal_id"] = settings.rollypay_terminal_id
         if settings.rollypay_success_redirect_url:

@@ -85,6 +85,14 @@ class Settings(BaseSettings):
     yookassa_timeout: float = Field(default=20.0, alias="YOOKASSA_TIMEOUT")
     yookassa_proxy_url: str = Field(default="", alias="YOOKASSA_PROXY_URL")
 
+    # ── Platega ──────────────────────────────────────────────
+    platega_base_url: str = Field(default="https://app.platega.io", alias="PLATEGA_BASE_URL")
+    platega_merchant_id: str = Field(default="", alias="PLATEGA_MERCHANT_ID")
+    platega_secret: str = Field(default="", alias="PLATEGA_SECRET")
+    platega_success_redirect_url: str = Field(default="", alias="PLATEGA_SUCCESS_REDIRECT_URL")
+    platega_fail_redirect_url: str = Field(default="", alias="PLATEGA_FAIL_REDIRECT_URL")
+    platega_timeout: float = Field(default=20.0, alias="PLATEGA_TIMEOUT")
+
     # ── App ──────────────────────────────────────────────────
     dev_mode: bool = Field(default=False, alias="DEV_MODE")
     support_url: str = Field(default="https://t.me/mistervpnsup_bot", alias="SUPPORT_URL")

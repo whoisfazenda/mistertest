@@ -153,7 +153,7 @@ export function CustomRenewModal({ isOpen, onClose, onSuccess }: CustomRenewModa
               {method === 'balance' && <Check size={18} className="text-white" />}
             </button>
 
-            {/* 2. SBP (ЮMoney) */}
+            {/* 2. SBP & Cards (Platega) */}
             <button
               onClick={() => {
                 haptic('light');
@@ -168,14 +168,14 @@ export function CustomRenewModal({ isOpen, onClose, onSuccess }: CustomRenewModa
               <div className="flex items-center gap-3">
                 <QrCode size={20} className={method === 'sbp' || method === 'card' ? 'text-white' : 'text-zinc-400'} />
                 <div>
-                  <div className="text-sm font-semibold text-white">Оплата через СБП (ЮMoney)</div>
-                  <div className="text-xs text-txt2">Банковские карты, QR СБП без комиссии</div>
+                  <div className="text-sm font-semibold text-white">Оплата через СБП / Картой РФ</div>
+                  <div className="text-xs text-txt2">QR-код СБП, Карты МИР через Platega</div>
                 </div>
               </div>
               {(method === 'sbp' || method === 'card') && <Check size={18} className="text-white" />}
             </button>
 
-            {/* 3. Crypto (RollyPay) */}
+            {/* 3. Crypto (Platega) */}
             <button
               onClick={() => {
                 haptic('light');
@@ -190,8 +190,8 @@ export function CustomRenewModal({ isOpen, onClose, onSuccess }: CustomRenewModa
               <div className="flex items-center gap-3">
                 <Sparkles size={20} className={method === 'crypto' ? 'text-white' : 'text-zinc-400'} />
                 <div>
-                  <div className="text-sm font-semibold text-white">Оплата криптой (RollyPay)</div>
-                  <div className="text-xs text-txt2">USDT, TON, BTC, CryptoBot, xRocket</div>
+                  <div className="text-sm font-semibold text-white">Оплата криптовалютой</div>
+                  <div className="text-xs text-txt2">USDT, TON, BTC через Platega</div>
                 </div>
               </div>
               {method === 'crypto' && <Check size={18} className="text-white" />}

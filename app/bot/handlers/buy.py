@@ -200,13 +200,29 @@ async def render_payment_method_choice(
 ) -> None:
     from app.bot.keyboards.factory import make_button
 
-    rows: list[list[InlineKeyboardButton]] = [
-        [make_button("👛 Карта / СБП", f"pay:start:yookassa_all:{order_uuid}", "primary")],
-        [make_button("💎 Криптовалютой", f"pay:start:crypto:{order_uuid}", "success")],
-        [make_button("🚀 xRocket", f"pay:start:xrocket:{order_uuid}", "success")],
-        [make_button("🤖 CryptoBot", f"pay:start:cryptobot:{order_uuid}", "success")],
-        [make_button("❌ Отменить", f"pay:cancel:{order_uuid}", "danger")],
-    ]
+    active_provider = (settings.payment_provider or "platega").lower()
+
+    if active_provider == "platega":
+        rows: list[list[InlineKeyboardButton]] = [
+            [make_button("⚡️ СБП (QR-код)", f"pay:start:platega_sbp:{order_uuid}", "primary")],
+            [make_button("💳 Банковская карта РФ", f"pay:start:platega_card:{order_uuid}", "primary")],
+            [make_button("💎 Криптовалютой", f"pay:start:platega_crypto:{order_uuid}", "success")],
+            [make_button("❌ Отменить", f"pay:cancel:{order_uuid}", "danger")],
+        ]
+    elif active_provider == "rollypay":
+        rows = [
+            [make_button("👛 Карта / СБП", f"pay:start:sbp:{order_uuid}", "primary")],
+            [make_button("💎 Криптовалютой", f"pay:start:crypto:{order_uuid}", "success")],
+            [make_button("🚀 xRocket", f"pay:start:xrocket:{order_uuid}", "success")],
+            [make_button("🤖 CryptoBot", f"pay:start:cryptobot:{order_uuid}", "success")],
+            [make_button("❌ Отменить", f"pay:cancel:{order_uuid}", "danger")],
+        ]
+    else:
+        rows = [
+            [make_button("👛 Карта / СБП", f"pay:start:yookassa_all:{order_uuid}", "primary")],
+            [make_button("💎 Криптовалютой", f"pay:start:crypto:{order_uuid}", "success")],
+            [make_button("❌ Отменить", f"pay:cancel:{order_uuid}", "danger")],
+        ]
     if back_callback:
         rows.append([make_button("⬅️ Назад", back_callback)])
     message_text = text + "\n\nВыберите способ оплаты:"
@@ -275,17 +291,23 @@ def _payment_text(order) -> str:
 
 
 def _provider_for_payment_method(method: str) -> str:
-    if (settings.payment_provider or "").lower() == "rollypay":
+    active_provider = (settings.payment_provider or "platega").lower()
+    if active_provider == "platega" or method.startswith("platega_"):
+        return "platega"
+    if active_provider == "rollypay":
         return "rollypay"
     if method in {"yookassa_all", "yookassa_card", "yookassa_sbp"}:
         return "yookassa"
     if method in {"crypto", "xrocket", "cryptobot", "sbp", "card"}:
-        return "rollypay"
+        return active_provider
     return settings.payment_provider
 
 
 def _provider_payment_method(method: str) -> str | None:
     mapping = {
+        "platega_sbp": "sbp",
+        "platega_card": "card",
+        "platega_crypto": "crypto",
         "sbp": "sbp",
         "card": "card",
         "yookassa_all": None,
@@ -300,9 +322,12 @@ def _provider_payment_method(method: str) -> str | None:
 
 def _payment_method_label(method: str) -> str:
     labels = {
+        "platega_sbp": "СБП (Platega)",
+        "platega_card": "Банковская карта (Platega)",
+        "platega_crypto": "Криптовалюта (Platega)",
         "sbp": "СБП (QR-код)",
         "card": "Банковская карта (РФ)",
-        "yookassa_all": "Карта / СБП (RollyPay)",
+        "yookassa_all": "Карта / СБП",
         "yookassa_card": "Картой РФ",
         "yookassa_sbp": "СБП (QR-код)",
         "crypto": "Криптовалютой через RollyPay",

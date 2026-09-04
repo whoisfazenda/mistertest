@@ -141,6 +141,65 @@ async def rollypay_webhook(request: Request) -> Response:
     return Response(status_code=200)
 
 
+@router.post("/webhooks/platega")
+@router.get("/webhooks/platega")
+async def platega_webhook(request: Request) -> Response:
+    if request.method == "GET":
+        return Response(content="Platega webhook endpoint is active", status_code=200)
+
+    raw_body = await request.body()
+    from app.services.payments.factory import get_payment_provider
+
+    provider = get_payment_provider("platega")
+    try:
+        result = await provider.handle_webhook(raw_body, dict(request.headers))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Platega webhook rejected: %s", exc)
+        return Response(status_code=403)
+
+    if result.status != PaymentStatus.SUCCEEDED:
+        logger.info("Platega webhook status: %s %s", result.event_type, result.status)
+        return Response(status_code=200)
+
+    bot = request.app.state.bot
+    client = request.app.state.adaptgroup_client
+    async with async_session_factory() as session:
+        order_service = OrderService(session, client, provider)
+        order = await order_service.orders.get_by_payment_id(result.payment_id)
+        if order is None and result.order_uuid:
+            order = await order_service.orders.get_by_uuid(result.order_uuid)
+            if order is not None and not order.payment_id:
+                order.payment_id = result.payment_id
+                await session.flush()
+        if order is None:
+            logger.warning("Platega webhook for unknown payment %s", result.payment_id)
+            return Response(status_code=200)
+
+        if order.status == OrderStatus.PENDING:
+            await order_service.orders.mark_paid(order, result.payment_id)
+            await session.commit()
+
+        outcome = await order_service.provision(order)
+        if bot is not None and (outcome.provisioned or outcome.already_done):
+            try:
+                text = "✅ Оплата получена! Ваш VPN успешно активирован."
+                if outcome.subscription:
+                    sub = outcome.subscription
+                    public_url = public_subscription_url(sub.subscription_uuid)
+                    backup_url = upstream_subscription_url(
+                        sub.subscription_uuid, sub.subscription_url
+                    )
+                    text += f"\n\nОсновная ссылка:\n<code>{public_url}</code>"
+                    if backup_url != public_url:
+                        text += f"\n\nРезервная ссылка:\n<code>{backup_url}</code>"
+                await bot.send_message(order.user.telegram_id, text)
+            except Exception as exc:  # noqa: BLE001
+                logger.info("Could not notify user about Platega payment: %s", exc)
+
+    return Response(status_code=200)
+
+
 @router.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+

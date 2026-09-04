@@ -183,7 +183,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
               <Sparkles size={20} className={method === 'crypto' ? 'text-white' : 'text-zinc-500'} />
               <div>
                 <div className="text-xs font-bold text-white">Криптовалюта</div>
-                <div className="text-[10.5px] text-txt2">RollyPay / USDT</div>
+                <div className="text-[10.5px] text-txt2">Platega / USDT</div>
               </div>
             </button>
           </div>

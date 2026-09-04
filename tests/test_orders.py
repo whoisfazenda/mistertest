@@ -165,3 +165,49 @@ async def test_double_lock_prevents_duplicate(session) -> None:
     assert await repo.try_lock_for_provisioning(order.id) is True
     # Status is now PROVISIONING → second lock fails.
     assert await repo.try_lock_for_provisioning(order.id) is False
+
+
+async def test_gift_provisions_subscription_for_recipient(session) -> None:
+    payer, plan = await _setup(session)
+    recipient = User(telegram_id=777, username="recipient", first_name="Recipient")
+    session.add(recipient)
+    await session.commit()
+
+    svc = OrderService(session, FakeAdaptGroupClient(), MockPaymentProvider())
+    order = await svc.create_gift_order(payer.id, recipient, plan.plan_uuid)
+    await svc.orders.mark_paid(order)
+    await session.commit()
+    outcome = await svc.provision(order)
+
+    assert outcome.provisioned is True
+    assert outcome.subscription is not None
+    assert outcome.subscription.user_id == recipient.id
+    assert order.order_type == OrderType.GIFT
+
+
+async def test_referral_bonus_is_awarded_once_after_first_paid_order(session) -> None:
+    referrer = User(telegram_id=888, username="referrer")
+    buyer = User(telegram_id=889, username="buyer", referrer_id=1)
+    session.add_all([referrer, buyer])
+    await session.flush()
+    buyer.referrer_id = referrer.id
+    plan = VPNPlanSnapshot(
+        plan_uuid="ref-plan", name="Referral", retail_price=Decimal("199"),
+        purchase_price=Decimal("100"), currency="RUB", duration_days=30,
+        max_devices=3, is_trial=False, is_active=True,
+    )
+    session.add(plan)
+    await session.commit()
+
+    svc = OrderService(session, FakeAdaptGroupClient(), MockPaymentProvider())
+    order = await svc.create_new_subscription_order(buyer.id, plan.plan_uuid)
+    await svc.orders.mark_paid(order)
+    await session.commit()
+    await svc.provision(order)
+    first_earned = Decimal(str(referrer.referral_earned or 0))
+
+    await svc.provision(order)
+
+    assert first_earned > 0
+    assert Decimal(str(referrer.referral_earned or 0)) == first_earned
+    assert buyer.referral_rewarded is True
