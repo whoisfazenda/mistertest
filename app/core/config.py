@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     )
 
     # ── Payments ─────────────────────────────────────────────
-    payment_provider: str = Field(default="mock", alias="PAYMENT_PROVIDER")
+    payment_provider: str = Field(default="platega", alias="PAYMENT_PROVIDER")
     currency: str = Field(default="RUB", alias="CURRENCY")
     traffic_price_per_gb: Decimal = Field(default=Decimal("3"), alias="TRAFFIC_PRICE_PER_GB")
     adaptgroup_usd_to_rub_rate: Decimal = Field(
