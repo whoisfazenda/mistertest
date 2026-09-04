@@ -19,7 +19,7 @@ def get_client() -> AdaptGroupVPNClient:
 
 
 def get_payments() -> PaymentProvider:
-    return get_payment_provider()
+    return get_payment_provider("platega")
 
 
 async def shutdown() -> None:

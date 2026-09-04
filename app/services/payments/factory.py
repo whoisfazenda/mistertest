@@ -17,15 +17,17 @@ from app.services.payments.yookassa import YooKassaProvider
 
 @lru_cache
 def get_payment_provider(provider_name: str | None = None) -> PaymentProvider:
-    provider = (provider_name or settings.payment_provider).lower().strip()
-    if provider == "mock":
+    raw = (provider_name or settings.payment_provider or "platega").lower().strip()
+    if provider_name is None and raw == "rollypay":
+        raw = "platega"
+    if raw == "mock":
         return MockPaymentProvider()
-    if provider == "platega":
+    if raw == "platega":
         return PlategaProvider()
-    if provider == "rollypay":
+    if raw == "rollypay":
         return RollyPayProvider()
-    if provider == "yookassa":
+    if raw == "yookassa":
         return YooKassaProvider()
     raise ValueError(
-        f"Unknown PAYMENT_PROVIDER='{provider}'. Available: mock, platega, rollypay, yookassa."
+        f"Unknown PAYMENT_PROVIDER='{raw}'. Available: mock, platega, rollypay, yookassa."
     )

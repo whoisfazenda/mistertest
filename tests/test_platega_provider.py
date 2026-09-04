@@ -178,3 +178,26 @@ async def test_platega_webhook_endpoint_get() -> None:
         assert "Platega" in response.text
 
 
+def test_miniapp_payment_config_routes_to_platega() -> None:
+    from app.api.routes.miniapp import _payment_config
+
+    assert _payment_config("crypto") == ("platega", "crypto", "Криптовалюта (Platega)")
+    assert _payment_config("platega_crypto") == ("platega", "crypto", "Криптовалюта (Platega)")
+    assert _payment_config("xrocket") == ("platega", "crypto", "Криптовалюта (Platega)")
+    assert _payment_config("cryptobot") == ("platega", "crypto", "Криптовалюта (Platega)")
+    assert _payment_config("sbp") == ("platega", "sbp", "СБП (Platega)")
+    assert _payment_config("platega_sbp") == ("platega", "sbp", "СБП (Platega)")
+    assert _payment_config("card") == ("platega", "card", "Банковская карта (Platega)")
+    assert _payment_config("platega_card") == ("platega", "card", "Банковская карта (Platega)")
+    assert _payment_config("anything_else") == ("platega", None, "Platega")
+
+
+def test_bot_provider_for_payment_method_routes_to_platega() -> None:
+    from app.bot.handlers.buy import _provider_for_payment_method, _provider_payment_method
+
+    for m in ["crypto", "platega_crypto", "sbp", "platega_sbp", "card", "platega_card", "xrocket", "cryptobot"]:
+        assert _provider_for_payment_method(m) == "platega"
+        assert _provider_payment_method(m) in {"crypto", "sbp", "card"}
+
+
+

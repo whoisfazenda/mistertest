@@ -2820,52 +2820,19 @@ async def _start_order_payment(
 
 
 def _payment_config(method: str) -> tuple[str, str | None, str]:
-    default_provider = (settings.payment_provider or "platega").lower()
-
-    if default_provider == "platega" or method.startswith("platega"):
-        mapping: dict[str, tuple[str, str | None, str]] = {
-            "sbp": ("platega", "sbp", "СБП (Platega)"),
-            "platega_sbp": ("platega", "sbp", "СБП (Platega)"),
-            "card": ("platega", "card", "Банковская карта (Platega)"),
-            "platega_card": ("platega", "card", "Банковская карта (Platega)"),
-            "crypto": ("platega", "crypto", "Криптовалюта (Platega)"),
-            "platega_crypto": ("platega", "crypto", "Криптовалюта (Platega)"),
-            "platega": ("platega", None, "Platega"),
-            "xrocket": ("platega", "crypto", "Криптовалюта (Platega)"),
-            "cryptobot": ("platega", "crypto", "Криптовалюта (Platega)"),
-        }
-        if method in mapping:
-            return mapping[method]
+    clean = (method or "").lower().strip()
+    if clean in {"sbp", "platega_sbp"}:
+        return ("platega", "sbp", "СБП (Platega)")
+    if clean in {"card", "platega_card", "bank_card"}:
+        return ("platega", "card", "Банковская карта (Platega)")
+    if clean in {"crypto", "platega_crypto", "xrocket", "cryptobot"}:
+        return ("platega", "crypto", "Криптовалюта (Platega)")
+    if clean.startswith("platega"):
         return ("platega", None, "Platega")
-
-    if default_provider == "rollypay":
-        mapping: dict[str, tuple[str, str | None, str]] = {
-            "sbp": ("rollypay", "sbp", "СБП (RollyPay)"),
-            "card": ("rollypay", "card", "Банковская карта (RollyPay)"),
-            "crypto": ("rollypay", "crypto", "Криптовалюта (RollyPay)"),
-            "rollypay": ("rollypay", None, "RollyPay"),
-            "xrocket": ("rollypay", "xrocket", "xRocket"),
-            "cryptobot": ("rollypay", "cryptobot", "CryptoBot"),
-        }
-        if method in mapping:
-            return mapping[method]
-        return ("rollypay", None, "RollyPay")
-
-    mapping: dict[str, tuple[str, str | None, str]] = {
-        "sbp": ("yookassa", "sbp", "СБП (ЮKassa)"),
-        "yoomoney": ("yookassa", "sbp", "ЮMoney"),
-        "yookassa": ("yookassa", "sbp", "ЮKassa"),
-        "yookassa_sbp": ("yookassa", "sbp", "СБП через ЮKassa"),
-        "yookassa_card": ("yookassa", "card", "Картой через ЮKassa"),
-        "card": ("yookassa", "card", "Банковская карта (ЮMoney)"),
-        "crypto": ("rollypay", "crypto", "Криптовалюта (RollyPay)"),
-        "rollypay": ("rollypay", "crypto", "RollyPay"),
-        "xrocket": ("rollypay", "xrocket", "xRocket"),
-        "cryptobot": ("rollypay", "cryptobot", "CryptoBot"),
-    }
-    if method in mapping:
-        return mapping[method]
-    return ("yookassa", "sbp", "СБП (ЮKassa)")
+    if clean in {"yookassa_all", "yookassa_card", "yookassa_sbp", "yoomoney"}:
+        return ("yookassa", "sbp" if "sbp" in clean else "card", "ЮKassa")
+    # All remaining methods, including sbp/card/crypto fallbacks, default strictly to Platega
+    return ("platega", None, "Platega")
 
 
 async def _sync_user_notifications(
