@@ -1463,7 +1463,7 @@ async def admin_integration(callback: CallbackQuery, session: AsyncSession) -> N
         f"DEV_MODE: <b>{'ON' if settings.dev_mode else 'off'}</b>\n"
         f"Последняя синхронизация тарифов: {format_date(last_sync)}"
     )
-        await replace_with_text_screen(
+    await replace_with_text_screen(
         callback,
         text,
         reply_markup=inline_keyboard([
