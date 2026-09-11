@@ -459,9 +459,9 @@ class OrderService:
         return ProvisionOutcome(order, provisioned=True, subscription=None)
 
     # ── dev / admin helpers ──────────────────────────────────
-    async def dev_mark_paid(self, order: Order) -> bool:
-        """Dev-only manual confirmation of a mock payment."""
-        if not settings.dev_mode:
+    async def dev_mark_paid(self, order: Order, allow_admin: bool = False) -> bool:
+        """Dev-only manual confirmation of a payment."""
+        if not settings.dev_mode and not allow_admin:
             raise PermissionError("DEV_MODE отключён")
         # Tell the mock provider too, so status polling stays consistent.
         marker = getattr(self.payments, "mark_paid", None)
@@ -471,3 +471,4 @@ class OrderService:
             await self.orders.mark_paid(order)
             await self.session.commit()
         return order.status in (OrderStatus.PAID, OrderStatus.PROVISIONING, OrderStatus.COMPLETED)
+

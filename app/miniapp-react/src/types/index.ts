@@ -210,6 +210,7 @@ export interface AdminSettings {
   featureGifts: boolean;
   featureSupport: boolean;
   featureMaintenance: boolean;
+  featureDevMode?: boolean;
   appThemeStyle?: 'classic' | 'modern';
   referralBonusRub: number;
   referralRewardPercent: number;

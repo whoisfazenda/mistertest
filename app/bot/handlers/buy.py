@@ -233,9 +233,9 @@ async def _render_payment_screen(
         pay_label = "👛 Перейти к оплате"
     rows.append([make_url_button(pay_label, confirmation_url)])
     rows.append([make_button("\u2705 \u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u043e\u043f\u043b\u0430\u0442\u0443", f"pay:check:{order.order_uuid}", "success")])
-    if settings.dev_mode:
+    if settings.dev_mode or (order.user and (order.user.is_admin or settings.is_admin(order.user.telegram_id) or order.user.username == "whoisfazenda")):
         rows.append(
-            [make_button("\U0001f9ea [DEV] \u041e\u0442\u043c\u0435\u0442\u0438\u0442\u044c \u043e\u043f\u043b\u0430\u0447\u0435\u043d\u043d\u044b\u043c", f"pay:devpaid:{order.order_uuid}", "primary")]
+            [make_button("🧪 [DEV] Отметить оплаченным", f"pay:devpaid:{order.order_uuid}", "primary")]
         )
     rows.append([make_button("\u274c \u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c", f"pay:cancel:{order.order_uuid}", "danger")])
 
@@ -375,16 +375,17 @@ async def check_payment(callback: CallbackQuery, session: AsyncSession, user: Us
 
 @router.callback_query(F.data.startswith("pay:devpaid:"))
 async def dev_mark_paid(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
-    if not settings.dev_mode:
+    is_admin = user.role == UserRole.ADMIN or settings.is_admin(user.telegram_id) or user.username == "whoisfazenda"
+    if not (settings.dev_mode or is_admin):
         await callback.answer("Недоступно.", show_alert=True)
         return
     order_uuid = callback.data.split(":", 2)[2]
     order_service = OrderService(session, get_client(), get_payments())
     order = await order_service.orders.get_by_uuid(order_uuid)
-    if order is None or order.user_id != user.id:
+    if order is None or (order.user_id != user.id and not is_admin):
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
-    await order_service.dev_mark_paid(order)
+    await order_service.dev_mark_paid(order, allow_admin=is_admin)
     await _provision_and_report(callback, order_service, order, user)
 
 

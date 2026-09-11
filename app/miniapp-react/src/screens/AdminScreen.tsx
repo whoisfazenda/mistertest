@@ -479,6 +479,12 @@ export function AdminScreen() {
                     active: settings?.featureMaintenance ?? false,
                     danger: true,
                   },
+                  {
+                    key: 'featureDevMode' as any,
+                    title: '🧪 Режим тестирования (DEV_MODE)',
+                    desc: 'Позволяет тестировать и оформлять заказы без списания реальных средств',
+                    active: settings?.featureDevMode ?? false,
+                  },
                 ].map((feat) => (
                   <div
                     key={feat.key}

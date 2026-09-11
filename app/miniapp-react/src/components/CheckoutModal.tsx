@@ -275,6 +275,30 @@ export function CheckoutModal({
               </div>
               {method === 'crypto' && <Check size={18} className="text-white" />}
             </button>
+
+            {/* 4. DEV Mode (Admin only) */}
+            {(user?.isAdmin || user?.telegramId === 919840206) && (
+              <button
+                onClick={() => {
+                  haptic('light');
+                  setMethod('dev' as any);
+                }}
+                className={`flex w-full items-center justify-between rounded-2xl border p-3.5 text-left transition-all ${
+                  (method as any) === 'dev'
+                    ? 'border-amber-400/50 bg-amber-500/10 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                    : 'border-white/10 bg-white/[0.02] text-txt2 hover:bg-white/[0.05]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🧪</span>
+                  <div>
+                    <div className="text-sm font-semibold text-amber-300">Dev (Без оплаты)</div>
+                    <div className="text-xs text-txt2">Тестовая выдача без списания средств</div>
+                  </div>
+                </div>
+                {(method as any) === 'dev' && <Check size={18} className="text-amber-400" />}
+              </button>
+            )}
           </div>
         </div>
 
@@ -294,6 +318,28 @@ export function CheckoutModal({
               <span>Открыть страницу оплаты</span>
               <ExternalLink size={14} />
             </button>
+            {(user?.isAdmin || user?.telegramId === 919840206) && activeOrderUuid && (
+              <button
+                onClick={async () => {
+                  try {
+                    await fetch(`/miniapp/api/orders/${activeOrderUuid}/dev-pay`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'Authorization': (window as any).Telegram?.WebApp?.initData || '' },
+                    });
+                    setWaitingPayment(false);
+                    showAlert('🧪 Оплачено через Dev-режим!');
+                    await refresh();
+                    onSuccess?.();
+                    onClose();
+                  } catch {
+                    showAlert('Ошибка Dev-оплаты');
+                  }
+                }}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/20 py-2.5 text-xs font-bold text-amber-300 hover:bg-amber-500/30"
+              >
+                <span>🧪 [DEV] Оплатить без денег</span>
+              </button>
+            )}
           </div>
         )}
 

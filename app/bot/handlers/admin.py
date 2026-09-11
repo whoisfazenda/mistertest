@@ -69,6 +69,7 @@ def _admin_menu():
             [("🎟 Промокоды", "admin:promos", "primary"), ("📣 Рассылка", "admin:broadcast", "danger")],
             [("📣 Кампании", "admin:campaigns", "primary"), ("🧾 Аудит действий", "admin:audit")],
             [("🩺 Здоровье", "admin:health"), ("📤 Экспорт CSV", "admin:export")],
+            [("🧪 DEV: " + ("ВКЛ" if settings.dev_mode else "ВЫКЛ"), "admin:toggle_dev", "primary" if settings.dev_mode else "secondary")],
             [("⬅️ В меню", "menu:open")],
         ]
     )
@@ -1462,10 +1463,31 @@ async def admin_integration(callback: CallbackQuery, session: AsyncSession) -> N
         f"DEV_MODE: <b>{'ON' if settings.dev_mode else 'off'}</b>\n"
         f"Последняя синхронизация тарифов: {format_date(last_sync)}"
     )
-    await replace_with_text_screen(callback, 
-        text, reply_markup=inline_keyboard([[("⬅️ Назад", "admin:menu")]])
+        await replace_with_text_screen(
+        callback,
+        text,
+        reply_markup=inline_keyboard([
+            [("🧪 " + ("Выключить DEV" if settings.dev_mode else "Включить DEV"), "admin:toggle_dev", "primary")],
+            [("⬅️ Назад", "admin:menu")],
+        ]),
     )
     await callback.answer()
+
+
+@router.callback_query(F.data == "admin:toggle_dev")
+async def admin_toggle_dev(callback: CallbackQuery, session: AsyncSession) -> None:
+    settings.dev_mode = not settings.dev_mode
+    repo = SettingsRepository(session)
+    await repo.set("dev_mode", "true" if settings.dev_mode else "false")
+    await session.commit()
+    status = "ВКЛЮЧЕН" if settings.dev_mode else "ВЫКЛЮЧЕН"
+    await callback.answer(f"🧪 DEV-режим: {status}", show_alert=True)
+    try:
+        await replace_with_text_screen(
+            callback, await _admin_dashboard_text(session), reply_markup=_admin_menu()
+        )
+    except Exception:
+        pass
 
 
 def _plan_style(plan) -> str:
