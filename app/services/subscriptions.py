@@ -6,6 +6,7 @@ layer to translate into friendly messages.
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote, urlparse
@@ -163,9 +164,28 @@ class SubscriptionService:
         frozen_at = _parse_dt(_first(inner, "frozen_at"))
         if frozen_at:
             sub.frozen_at = frozen_at
+        raw_status = _first(inner, "status", "subscription_status")
+        if raw_status is not None:
+            s_val = str(raw_status).strip().lower()
+            if s_val in ("active", "enabled", "running", "ok"):
+                sub.is_active = True
+            elif s_val in ("inactive", "disabled", "expired", "terminated", "deleted"):
+                sub.is_active = False
+
         active = _first(inner, "is_active", "active", "enabled")
         if active is not None:
-            sub.is_active = bool(active)
+            if isinstance(active, str):
+                sub.is_active = active.strip().lower() in ("true", "1", "yes", "active", "enabled")
+            else:
+                sub.is_active = bool(active)
+
+        if sub.expires_at is not None:
+            exp = sub.expires_at
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp > datetime.now(timezone.utc) and not sub.is_frozen:
+                if raw_status is None or str(raw_status).strip().lower() not in ("disabled", "terminated", "deleted"):
+                    sub.is_active = True
 
         sub.last_synced_at = datetime.now(timezone.utc)
         return sub
@@ -177,6 +197,17 @@ class SubscriptionService:
         self.apply_status_payload(sub, data)
         await self.session.commit()
         return sub
+
+    async def refresh_user_subscriptions(self, user_id: int) -> list[VPNSubscription]:
+        """Fetch all user's subscriptions and refresh them concurrently from AdaptGroup."""
+        subs = await self.repo.list_for_user(user_id)
+        if not subs:
+            return []
+        await asyncio.gather(
+            *(asyncio.wait_for(self.refresh_from_api(sub), timeout=3.5) for sub in subs),
+            return_exceptions=True,
+        )
+        return subs
 
     async def get_devices(self, sub: VPNSubscription) -> list[dict[str, Any]]:
         await self.client.start()

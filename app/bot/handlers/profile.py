@@ -1,6 +1,7 @@
 """User profile cabinet: balance, subscriptions, history, promo codes."""
 from __future__ import annotations
 
+import asyncio
 from urllib.parse import quote
 
 from aiogram import F, Router
@@ -42,7 +43,11 @@ _device_tokens: dict[int, dict[str, dict[str, str]]] = {}
 
 @router.callback_query(F.data == "profile:open")
 async def profile_open(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
-    subs = await SubscriptionRepository(session).list_for_user(user.id)
+    service = SubscriptionService(session, get_client())
+    try:
+        subs = await service.refresh_user_subscriptions(user.id)
+    except Exception:
+        subs = await SubscriptionRepository(session).list_for_user(user.id)
     active = sum(1 for sub in subs if sub.is_effectively_active)
     current = subs[0] if subs else None
     current_line = "—"
@@ -74,7 +79,11 @@ async def profile_open(callback: CallbackQuery, session: AsyncSession, user: Use
 
 @router.callback_query(F.data == "profile:subs")
 async def profile_subscriptions(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
-    subs = await SubscriptionRepository(session).list_for_user(user.id)
+    service = SubscriptionService(session, get_client())
+    try:
+        subs = await service.refresh_user_subscriptions(user.id)
+    except Exception:
+        subs = await SubscriptionRepository(session).list_for_user(user.id)
     if not subs:
         await replace_with_photo_screen(
             callback,
@@ -135,6 +144,10 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
     service = SubscriptionService(session, get_client())
+    try:
+        await asyncio.wait_for(service.refresh_from_api(sub), timeout=3.0)
+    except Exception:
+        pass
     devices_count: int | None = None
     try:
         devices_count = len(await service.get_devices(sub))
