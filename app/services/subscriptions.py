@@ -59,7 +59,7 @@ def public_subscription_url(subscription_uuid: str) -> str:
         or DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL
     )
     base = base.rstrip("/")
-    if "sub." in base.lower():
+    if "sub." in base.lower() or "ru." in base.lower():
         return f"{base}/{quote(subscription_uuid, safe='')}"
     return f"{base}/sub/{quote(subscription_uuid, safe='')}"
 
