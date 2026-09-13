@@ -227,6 +227,8 @@ function normalize(raw: Record<string, any>): BootstrapData {
           autoRenewEnabled: Boolean(sub.auto_renew_enabled),
           subscriptionUrl: sub.subscription_url,
           publicUrl: sub.public_url || sub.subscription_url,
+          ruUrl: sub.ru_url || sub.public_url || sub.subscription_url,
+          subUrl: sub.sub_url,
           directUrl: sub.direct_url,
           fallbackUrl: sub.fallback_url || sub.direct_url,
         }
@@ -509,6 +511,8 @@ export async function getAdminUsers(page: number = 1, search: string = ''): Prom
             trafficUsedBytes: u.subscription.traffic_used_bytes,
             subscriptionUrl: u.subscription.subscription_url,
             publicUrl: u.subscription.public_url || u.subscription.subscription_url,
+            ruUrl: u.subscription.ru_url || u.subscription.public_url || u.subscription.subscription_url,
+            subUrl: u.subscription.sub_url,
             directUrl: u.subscription.direct_url,
             fallbackUrl: u.subscription.fallback_url,
             managementUrl: u.subscription.management_url,

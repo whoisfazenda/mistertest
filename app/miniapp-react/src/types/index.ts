@@ -44,6 +44,8 @@ export interface Subscription {
   maxDevices?: any;
   subscriptionUrl?: any;
   publicUrl?: any;
+  ruUrl?: any;
+  subUrl?: any;
   directUrl?: any;
   fallbackUrl?: any;
   rawConfig?: any;

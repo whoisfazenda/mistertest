@@ -23,7 +23,12 @@ from app.services.notifications import NotificationService
 from app.services.orders import OrderService
 from app.services.plan_periods import PlanPeriodService
 from app.services.plans import PlanService
-from app.services.subscriptions import public_subscription_url, upstream_subscription_url
+from app.services.subscriptions import (
+    public_subscription_url,
+    ru_subscription_url,
+    sub_subscription_url,
+    upstream_subscription_url,
+)
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 logger = get_logger(__name__)
@@ -454,14 +459,17 @@ async def _provision_and_report(callback, order_service: OrderService, order, us
         from app.bot.keyboards.menus import subscription_link_keyboard
 
         if sub is not None and order.order_type == OrderType.NEW_SUBSCRIPTION:
-            public_url = public_subscription_url(sub.subscription_uuid)
+            ru_url = ru_subscription_url(sub.subscription_uuid)
+            sub_url = sub_subscription_url(sub.subscription_uuid)
             backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
             text = (
                 f"{pe('sparkles')} <b>Подписка оформлена!</b>\n\n"
-                + texts.subscription_link(public_url)
+                + texts.subscription_links_text(ru_url, sub_url, backup_url)
             )
             await replace_with_text_screen(
-                callback, text, reply_markup=subscription_link_keyboard(public_url, backup_url)
+                callback,
+                text,
+                reply_markup=subscription_link_keyboard(ru_url, backup_url, sub_url=sub_url),
             )
         else:
             from app.bot.keyboards.menus import main_menu

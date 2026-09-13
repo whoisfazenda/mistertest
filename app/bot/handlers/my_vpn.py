@@ -24,6 +24,8 @@ from app.repositories.subscriptions import SubscriptionRepository
 from app.services.subscriptions import (
     SubscriptionService,
     public_subscription_url,
+    ru_subscription_url,
+    sub_subscription_url,
     upstream_subscription_url,
 )
 
@@ -89,12 +91,13 @@ async def get_link(callback: CallbackQuery, session: AsyncSession, user: User) -
     if sub is None:
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
-    public_url = public_subscription_url(sub.subscription_uuid)
+    ru_url = ru_subscription_url(sub.subscription_uuid)
+    sub_url = sub_subscription_url(sub.subscription_uuid)
     backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
     await replace_with_text_screen(
         callback,
-        texts.subscription_link(public_url),
-        reply_markup=subscription_link_keyboard(public_url, backup_url),
+        texts.subscription_links_text(ru_url, sub_url, backup_url),
+        reply_markup=subscription_link_keyboard(ru_url, backup_url, sub_url),
     )
     await callback.answer()
 

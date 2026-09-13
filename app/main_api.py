@@ -49,8 +49,8 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="VPN Bot Webhooks", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.include_router(webhooks.router)
-    app.include_router(subscription_page.router)
     app.include_router(miniapp.router)
+    app.include_router(subscription_page.router)
     app.mount(
         "/miniapp/static",
         StaticFiles(directory=str(APP_ROOT / "miniapp" / "static")),

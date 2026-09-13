@@ -2,7 +2,12 @@
 from __future__ import annotations
 
 from app.core.config import settings
-from app.services.subscriptions import public_subscription_url, upstream_subscription_url
+from app.services.subscriptions import (
+    public_subscription_url,
+    ru_subscription_url,
+    sub_subscription_url,
+    upstream_subscription_url,
+)
 from app.utils.formatting import format_days, format_gb_used, format_price, format_traffic
 
 GB = 1024 ** 3
@@ -48,11 +53,10 @@ def test_format_days() -> None:
     assert format_days(21) == "21 день"
 
 
-def test_public_subscription_url_uses_branded_https_port_until_configured(monkeypatch) -> None:
-    monkeypatch.setattr(settings, "public_base_url", "")
-    assert public_subscription_url("sub 123") == (
-        "https://sub.misterv.localnode.app:20173/sub/sub%20123"
-    )
+def test_subscription_urls(monkeypatch) -> None:
+    assert ru_subscription_url("sub 123") == "https://ru.misterv.site/sub%20123"
+    assert sub_subscription_url("sub 123") == "https://sub.misterv.site/sub%20123"
+    assert public_subscription_url("sub 123") == "https://ru.misterv.site/sub%20123"
 
 
 def test_upstream_subscription_url_keeps_adaptgroup_fallback(monkeypatch) -> None:

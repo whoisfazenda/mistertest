@@ -50,7 +50,10 @@ from app.services.plans import PlanService
 from app.services.family_share import FamilyShareService
 from app.services.subscriptions import (
     SubscriptionService,
+    direct_subscription_url,
     public_subscription_url,
+    ru_subscription_url,
+    sub_subscription_url,
     upstream_subscription_url,
 )
 from app.utils.idempotency import new_uuid
@@ -3002,10 +3005,13 @@ def _serialize_subscription(
         "is_expired": sub.is_expired,
         "is_trial": sub.is_trial,
         "auto_renew_enabled": sub.auto_renew_enabled,
-        "subscription_url": public_subscription_url(sub.subscription_uuid),
-        "public_url": public_subscription_url(sub.subscription_uuid),
-        "direct_url": upstream_subscription_url(sub.subscription_uuid, sub.subscription_url),
-        "fallback_url": upstream_subscription_url(sub.subscription_uuid, sub.subscription_url),
+        "subscription_url": ru_subscription_url(sub.subscription_uuid),
+        "public_url": ru_subscription_url(sub.subscription_uuid),
+        "ru_url": ru_subscription_url(sub.subscription_uuid),
+        "sub_url": sub_subscription_url(sub.subscription_uuid),
+        "direct_url": direct_subscription_url(sub.subscription_uuid, sub.subscription_url),
+        "backup_url": direct_subscription_url(sub.subscription_uuid, sub.subscription_url),
+        "fallback_url": direct_subscription_url(sub.subscription_uuid, sub.subscription_url),
         "management_url": f"/s/{sub.subscription_uuid}",
     }
 

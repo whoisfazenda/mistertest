@@ -1489,8 +1489,11 @@ function ensureSheetGrip() {
 }
 
 function connectionSheet() {
-  const url = state.data.subscription?.subscription_url;
-  if (!url) return toast('Ключ ещё не создан', 'error');
+  const sub = state.data.subscription;
+  const ruUrl = sub?.ru_url || sub?.subscription_url || '';
+  const subUrl = sub?.sub_url || '';
+  const directUrl = sub?.direct_url || sub?.fallback_url || '';
+  if (!ruUrl && !subUrl && !directUrl) return toast('Ключ ещё не создан', 'error');
   const ua = `${tg?.platform || ''} ${navigator.userAgent || ''}`.toLowerCase();
   const recommended = ua.includes('android') || ua.includes('iphone') || ua.includes('ipad')
     ? 'happ'
@@ -1505,11 +1508,38 @@ function connectionSheet() {
         <span class="client-mark">${client.mark}${client.id === recommended ? '<i class="client-recommended">★</i>' : ''}</span>
         <span class="setting-copy"><b>${escapeHtml(client.name)}</b><small>${escapeHtml(client.hint)}</small></span>
       </button>`).join('')}</div>
-    <h3>Ключ подписки</h3>
-    ${qrSvg(url)}
-    <div class="key-box"><code>${escapeHtml(url)}</code>
-      <button class="row-action" data-action="copy-key" type="button" aria-label="Скопировать">${icon('copy')}</button>
-    </div>
+    <h3>Ссылки для подключения</h3>
+    ${ruUrl ? qrSvg(ruUrl) : ''}
+    ${ruUrl ? `
+    <div class="sub-link-card" style="margin-bottom:12px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;background:rgba(255,255,255,0.03)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="font-size:13px;color:#fff">🇷🇺 Основная («доступна из РФ»)</b>
+        <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)">ru.misterv.site</span>
+      </div>
+      <div class="key-box"><code>${escapeHtml(ruUrl)}</code>
+        <button class="row-action" data-action="copy-custom" data-copy="${escapeHtml(ruUrl)}" type="button" aria-label="Скопировать">${icon('copy')}</button>
+      </div>
+    </div>` : ''}
+    ${subUrl ? `
+    <div class="sub-link-card" style="margin-bottom:12px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;background:rgba(255,255,255,0.03)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="font-size:13px;color:#fff">🌍 Основная («недоступна из РФ»)</b>
+        <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)">sub.misterv.site</span>
+      </div>
+      <div class="key-box"><code>${escapeHtml(subUrl)}</code>
+        <button class="row-action" data-action="copy-custom" data-copy="${escapeHtml(subUrl)}" type="button" aria-label="Скопировать">${icon('copy')}</button>
+      </div>
+    </div>` : ''}
+    ${directUrl && directUrl !== ruUrl && directUrl !== subUrl ? `
+    <div class="sub-link-card" style="margin-bottom:12px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;background:rgba(255,255,255,0.03)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b style="font-size:13px;color:#fff">⚡ Резервная (network / прямая)</b>
+        <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)">network IP</span>
+      </div>
+      <div class="key-box"><code>${escapeHtml(directUrl)}</code>
+        <button class="row-action" data-action="copy-custom" data-copy="${escapeHtml(directUrl)}" type="button" aria-label="Скопировать">${icon('copy')}</button>
+      </div>
+    </div>` : ''}
     <p class="field-hint">Не делитесь ключом: он даёт доступ к вашему трафику и слотам устройств.</p>`;
 }
 
@@ -2629,7 +2659,8 @@ const ACTIONS = {
   reload: () => loadBootstrap(),
   connect: () => { const markup = connectionSheet(); if (markup) openSheet(markup); },
   'show-key': () => { const markup = connectionSheet(); if (markup) openSheet(markup); },
-  'copy-key': () => copyText(state.data.subscription?.subscription_url || '', 'Ключ скопирован'),
+  'copy-key': () => copyText(state.data.subscription?.ru_url || state.data.subscription?.subscription_url || '', 'Ключ скопирован'),
+  'copy-custom': node => copyText(node.dataset.copy || '', 'Ссылка скопирована'),
   renew: () => { const markup = renewCheckout(); if (markup) { openSheet(markup); updateRenewDays(30); } },
   'quick-renew': node => performPayment('renew', '', state.data.user.preferred_payment_method || 'card', '', node),
   'renew-standard': () => {

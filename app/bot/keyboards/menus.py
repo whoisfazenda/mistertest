@@ -107,15 +107,30 @@ def my_vpn_keyboard(sub: VPNSubscription, is_admin: bool = False) -> InlineKeybo
 
 
 def subscription_link_keyboard(
-    url: str,
+    ru_url: str,
     backup_url: str | None = None,
+    sub_url: str | None = None,
 ) -> InlineKeyboardMarkup:
     rows: list[list] = [
-        [make_url_button("🌐 Открыть ссылку", url)],
-        [make_copy_button("📋 Скопировать ссылку", url)],
+        [
+            make_url_button("🇷🇺 Открыть (РФ)", ru_url),
+            make_copy_button("📋 Скопировать (РФ)", ru_url),
+        ],
     ]
-    if backup_url and backup_url != url:
-        rows.append([make_url_button("🛟 Резервная ссылка", backup_url)])
+    if sub_url and sub_url != ru_url:
+        rows.append(
+            [
+                make_url_button("🌍 Открыть (вне РФ)", sub_url),
+                make_copy_button("📋 Скопировать (вне РФ)", sub_url),
+            ]
+        )
+    if backup_url and backup_url not in (ru_url, sub_url):
+        rows.append(
+            [
+                make_url_button("⚡ Резервная (network)", backup_url),
+                make_copy_button("📋 Резервная (network)", backup_url),
+            ]
+        )
     rows.extend(
         [
             [make_button("📲 Инструкция по подключению", "help:connect")],

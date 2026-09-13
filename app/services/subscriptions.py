@@ -52,17 +52,31 @@ def _build_subscription_url(subscription_uuid: str, explicit: str | None) -> str
     return f"{base}/sub/{quote(subscription_uuid, safe='')}"
 
 
-def public_subscription_url(subscription_uuid: str) -> str:
-    """Return the branded URL: https://sub.misterv.site/{uuid}."""
-    base = (
-        settings.subscription_base_url.strip()
-        or settings.public_base_url.strip()
-        or DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL
-    )
+def ru_subscription_url(subscription_uuid: str) -> str:
+    """Return the Russian proxy URL: https://ru.misterv.site/{uuid} (доступна из РФ)."""
+    base = settings.subscription_base_url.strip() or "https://ru.misterv.site"
+    if "sub." in base.lower():
+        base = base.replace("sub.", "ru.").replace("SUB.", "ru.")
     base = base.rstrip("/")
-    if "sub." in base.lower() or "ru." in base.lower():
-        return f"{base}/{quote(subscription_uuid, safe='')}"
-    return f"{base}/sub/{quote(subscription_uuid, safe='')}"
+    return f"{base}/{quote(subscription_uuid, safe='')}"
+
+
+def sub_subscription_url(subscription_uuid: str) -> str:
+    """Return the overseas direct domain URL: https://sub.misterv.site/{uuid} (недоступна из РФ)."""
+    base = "https://sub.misterv.site"
+    return f"{base}/{quote(subscription_uuid, safe='')}"
+
+
+def direct_subscription_url(
+    subscription_uuid: str, explicit: str | None = None
+) -> str:
+    """Return the network/direct upstream URL (резервная)."""
+    return upstream_subscription_url(subscription_uuid, explicit)
+
+
+def public_subscription_url(subscription_uuid: str) -> str:
+    """Primary subscription URL — defaults to RU proxy."""
+    return ru_subscription_url(subscription_uuid)
 
 
 def upstream_subscription_url(
@@ -74,7 +88,12 @@ def upstream_subscription_url(
         explicit_host = (urlparse(explicit).hostname or "").lower()
         public_base = settings.public_base_url.strip() or DEFAULT_PUBLIC_SUBSCRIPTION_BASE_URL
         public_host = (urlparse(public_base).hostname or "").lower()
-        if explicit_host and explicit_host != public_host:
+        if (
+            explicit_host
+            and explicit_host != public_host
+            and not explicit_host.startswith("ru.")
+            and not explicit_host.startswith("sub.")
+        ):
             return explicit
     return _build_subscription_url(subscription_uuid, None)
 

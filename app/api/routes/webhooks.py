@@ -18,9 +18,16 @@ from app.core.enums import OrderStatus, PaymentStatus
 from app.core.logging import get_logger
 from app.core.security import verify_webhook_signature
 from app.db.database import async_session_factory
+from app.bot import texts
+from app.bot.keyboards.menus import subscription_link_keyboard
 from app.services.notifications import NotificationService
 from app.services.orders import OrderService
-from app.services.subscriptions import public_subscription_url, upstream_subscription_url
+from app.services.subscriptions import (
+    public_subscription_url,
+    ru_subscription_url,
+    sub_subscription_url,
+    upstream_subscription_url,
+)
 from app.services.webhooks import WebhookService
 
 logger = get_logger(__name__)
@@ -201,16 +208,17 @@ async def _send_order_success_notification(bot, order, outcome) -> None:
 
         # NEW_SUBSCRIPTION or other
         text = "✅ <b>Оплата получена!</b> Ваш VPN успешно активирован."
+        reply_markup = None
         if outcome.subscription:
             sub = outcome.subscription
-            public_url = public_subscription_url(sub.subscription_uuid)
+            ru_url = ru_subscription_url(sub.subscription_uuid)
+            sub_url = sub_subscription_url(sub.subscription_uuid)
             backup_url = upstream_subscription_url(
                 sub.subscription_uuid, sub.subscription_url
             )
-            text += f"\n\nОсновная ссылка:\n<code>{public_url}</code>"
-            if backup_url != public_url:
-                text += f"\n\nРезервная ссылка:\n<code>{backup_url}</code>"
-        await bot.send_message(tg_id, text)
+            text += f"\n\n{texts.subscription_links_text(ru_url, sub_url, backup_url)}"
+            reply_markup = subscription_link_keyboard(ru_url, backup_url, sub_url=sub_url)
+        await bot.send_message(tg_id, text, reply_markup=reply_markup)
     except Exception as exc:  # noqa: BLE001
         logger.info("Could not notify user about payment: %s", exc)
 

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.bot import texts
 from app.bot.deps import get_client
 from app.bot.handlers._errors import friendly_error
-from app.bot.keyboards.factory import inline_keyboard, make_url_button
+from app.bot.keyboards.factory import inline_keyboard, make_copy_button, make_url_button
 from app.bot.premium_emoji import pe
 from app.bot.screens import (
     PROFILE_IMAGE,
@@ -31,6 +31,8 @@ from app.repositories.subscriptions import SubscriptionRepository
 from app.services.subscriptions import (
     SubscriptionService,
     public_subscription_url,
+    ru_subscription_url,
+    sub_subscription_url,
     upstream_subscription_url,
 )
 from app.utils.formatting import escape, format_date, format_gb_used, format_price
@@ -164,7 +166,8 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
     )
     traffic = "безлимит" if sub.is_unlimited_traffic else format_gb_used(sub.traffic_used_bytes, sub.traffic_limit_bytes)
     devices_line = _devices_usage_label(devices_count, sub.max_devices)
-    public_url = public_subscription_url(sub.subscription_uuid)
+    ru_url = ru_subscription_url(sub.subscription_uuid)
+    sub_url = sub_subscription_url(sub.subscription_uuid)
     backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
     text = (
         f"{pe('shield')} <b>Подписка</b>\n\n"
@@ -173,7 +176,9 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         f"{pe('time')} Действует до: <b>{format_date(sub.expires_at)}</b>\n"
         f"{pe('devices')} Устройства: <b>{devices_line}</b>\n"
         f"{pe('traffic')} Трафик: <b>{traffic}</b>\n\n"
-        f"{pe('link')} Ссылка:\n<code>{escape(public_url)}</code>"
+        f"🇷🇺 <b>Основная (доступна из РФ):</b>\n<code>{escape(ru_url)}</code>\n\n"
+        f"🌍 <b>Основная (недоступна из РФ):</b>\n<code>{escape(sub_url)}</code>\n\n"
+        f"⚡ <b>Резервная (network / прямая):</b>\n<code>{escape(backup_url)}</code>"
     )
     rows = [[("📱 Устройства", f"profile:devices:{token}", "primary")]]
     if sub.is_trial:
@@ -196,9 +201,16 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         ]
     )
     markup = inline_keyboard(rows)
-    markup.inline_keyboard.insert(1, [make_url_button("🌐 Открыть подписку", public_url)])
-    if backup_url != public_url:
-        markup.inline_keyboard.insert(2, [make_url_button("🛟 Резервная ссылка", backup_url)])
+    # Insert link action rows
+    link_buttons = [
+        [make_url_button("🇷🇺 Открыть (РФ)", ru_url), make_copy_button("📋 Скопировать (РФ)", ru_url)],
+    ]
+    if sub_url != ru_url:
+        link_buttons.append([make_url_button("🌍 Открыть (вне РФ)", sub_url), make_copy_button("📋 Скопировать (вне РФ)", sub_url)])
+    if backup_url not in (ru_url, sub_url):
+        link_buttons.append([make_url_button("⚡ Резервная (network)", backup_url), make_copy_button("📋 Скопировать (network)", backup_url)])
+    for idx, lrow in enumerate(reversed(link_buttons)):
+        markup.inline_keyboard.insert(1, lrow)
     await replace_with_text_screen(callback, text, reply_markup=markup)
     await callback.answer()
 
