@@ -103,13 +103,20 @@ async def get_link(callback: CallbackQuery, session: AsyncSession, user: User) -
     )
     await replace_with_text_screen(
         callback,
-        texts.subscription_links_text(ru_url, sub_url, backup_url, is_admin=user.is_admin),
+        texts.subscription_links_text(
+            ru_url,
+            sub_url,
+            backup_url,
+            is_admin=user.is_admin,
+            subscription_uuid=sub.subscription_uuid,
+        ),
         reply_markup=subscription_link_keyboard(
             ru_url,
             backup_url,
             sub_url,
             is_admin=user.is_admin,
             redirect_url=redirect_url,
+            subscription_uuid=sub.subscription_uuid,
         ),
     )
     await callback.answer()

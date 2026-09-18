@@ -34,6 +34,7 @@ from app.services.subscriptions import (
     public_subscription_url,
     ru_subscription_url,
     sub_subscription_url,
+    subscription_app_key,
     upstream_subscription_url,
 )
 from app.utils.formatting import escape, format_date, format_gb_used, format_price
@@ -170,6 +171,7 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
     ru_url = ru_subscription_url(sub.subscription_uuid)
     sub_url = sub_subscription_url(sub.subscription_uuid)
     backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
+    app_key = subscription_app_key(sub.subscription_uuid, is_admin=user.is_admin)
     text = (
         f"{pe('shield')} <b>Подписка</b>\n\n"
         f"{pe('subs')} Тариф: <b>{escape(sub.plan_name or 'VPN')}</b>\n"
@@ -177,6 +179,8 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         f"{pe('time')} Действует до: <b>{format_date(sub.expires_at)}</b>\n"
         f"{pe('devices')} Устройства: <b>{devices_line}</b>\n"
         f"{pe('traffic')} Трафик: <b>{traffic}</b>\n\n"
+        f"🔑 <b>Ключ для приложения Mister VPN:</b>\n<code>{escape(app_key)}</code>\n"
+        f"<i>💡 Скопируйте ключ и вставьте в приложении Mister VPN.</i>\n\n"
         f"🇷🇺 <b>Основная (доступна из РФ):</b>\n<code>{escape(ru_url)}</code>\n\n"
         f"🌍 <b>Основная (недоступна из РФ):</b>\n<code>{escape(sub_url)}</code>\n\n"
         f"⚡ <b>Резервная (network / прямая):</b>\n<code>{escape(backup_url)}</code>"
@@ -209,7 +213,9 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
     )
     markup = inline_keyboard(rows)
     # Insert link action rows
-    link_buttons = []
+    link_buttons = [
+        [make_copy_button("🔑 Скопировать ключ в приложение", app_key)]
+    ]
     if user.is_admin:
         admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
         redirect_url = f"{settings.subscription_base_url.rstrip('/')}/connect/admin?url={quote(ru_url, safe='')}"

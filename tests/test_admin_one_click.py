@@ -48,3 +48,28 @@ async def test_admin_one_click_redirect_endpoint() -> None:
     html = resp.body.decode("utf-8")
     assert "mistervpn://admin?url=https://sub.misterv.site/ru123" in html
     assert "Запуск приложения и подключение в 1 клик" in html
+
+
+def test_subscription_app_key_and_keyboard() -> None:
+    from app.services.subscriptions import subscription_app_key
+
+    uuid = "6fb54f15-7798-46cb-84aa-fa2256df25ea"
+    user_key = subscription_app_key(uuid, is_admin=False)
+    assert user_key == f"MR-{uuid}"
+
+    admin_key = subscription_app_key(uuid, is_admin=True)
+    assert admin_key == f"MR-ADMIN-{uuid}"
+
+    # Verify key is present in subscription_links_text
+    ru = "https://ru.misterv.site/" + uuid
+    sub = "https://sub.misterv.site/" + uuid
+    txt = texts.subscription_links_text(ru, sub, subscription_uuid=uuid, is_admin=False)
+    assert f"<code>MR-{uuid}</code>" in txt
+    assert "Ключ для приложения Mister VPN" in txt
+
+    # Verify copy button in keyboard
+    kb = subscription_link_keyboard(ru, sub_url=sub, subscription_uuid=uuid, is_admin=False)
+    buttons = [b for row in kb.inline_keyboard for b in row]
+    copy_keys = [b for b in buttons if b.copy_text and b.copy_text.text == f"MR-{uuid}"]
+    assert len(copy_keys) == 1
+    assert "Скопировать ключ в приложение" in copy_keys[0].text

@@ -79,6 +79,14 @@ def public_subscription_url(subscription_uuid: str) -> str:
     return ru_subscription_url(subscription_uuid)
 
 
+def subscription_app_key(subscription_uuid: str, *, is_admin: bool = False) -> str:
+    """Return special access key for Mister VPN app: MR-<uuid> or MR-ADMIN-<uuid>."""
+    clean_uuid = subscription_uuid.strip()
+    if is_admin:
+        return f"MR-ADMIN-{clean_uuid}"
+    return f"MR-{clean_uuid}"
+
+
 def upstream_subscription_url(
     subscription_uuid: str,
     explicit: str | None = None,

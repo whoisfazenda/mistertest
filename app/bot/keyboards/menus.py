@@ -115,8 +115,17 @@ def subscription_link_keyboard(
     *,
     is_admin: bool = False,
     redirect_url: str | None = None,
+    subscription_uuid: str | None = None,
 ) -> InlineKeyboardMarkup:
     rows: list[list] = []
+
+    if subscription_uuid:
+        from app.services.subscriptions import subscription_app_key
+
+        app_key = subscription_app_key(subscription_uuid, is_admin=is_admin)
+        rows.append([
+            make_copy_button("🔑 Скопировать ключ в приложение", app_key),
+        ])
 
     if is_admin:
         admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"

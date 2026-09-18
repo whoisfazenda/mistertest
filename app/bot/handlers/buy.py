@@ -471,7 +471,13 @@ async def _provision_and_report(callback, order_service: OrderService, order, us
             )
             text = (
                 f"{pe('sparkles')} <b>Подписка оформлена!</b>\n\n"
-                + texts.subscription_links_text(ru_url, sub_url, backup_url, is_admin=user.is_admin)
+                + texts.subscription_links_text(
+                    ru_url,
+                    sub_url,
+                    backup_url,
+                    is_admin=user.is_admin,
+                    subscription_uuid=sub.subscription_uuid,
+                )
             )
             await replace_with_text_screen(
                 callback,
@@ -482,6 +488,7 @@ async def _provision_and_report(callback, order_service: OrderService, order, us
                     sub_url=sub_url,
                     is_admin=user.is_admin,
                     redirect_url=redirect_url,
+                    subscription_uuid=sub.subscription_uuid,
                 ),
             )
         else:
