@@ -23,7 +23,6 @@ from app.bot.screens import (
     replace_with_text_screen,
 )
 from app.bot.states import PromoStates
-from app.core.config import settings
 from app.core.enums import OrderStatus, OrderType
 from app.db.models.user import User
 from app.repositories.orders import OrderRepository
@@ -34,7 +33,6 @@ from app.services.subscriptions import (
     public_subscription_url,
     ru_subscription_url,
     sub_subscription_url,
-    subscription_app_key,
     upstream_subscription_url,
 )
 from app.utils.formatting import escape, format_date, format_gb_used, format_price
@@ -171,7 +169,6 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
     ru_url = ru_subscription_url(sub.subscription_uuid)
     sub_url = sub_subscription_url(sub.subscription_uuid)
     backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
-    app_key = subscription_app_key(sub.subscription_uuid, is_admin=user.is_admin)
     text = (
         f"{pe('shield')} <b>Подписка</b>\n\n"
         f"{pe('subs')} Тариф: <b>{escape(sub.plan_name or 'VPN')}</b>\n"
@@ -179,18 +176,10 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         f"{pe('time')} Действует до: <b>{format_date(sub.expires_at)}</b>\n"
         f"{pe('devices')} Устройства: <b>{devices_line}</b>\n"
         f"{pe('traffic')} Трафик: <b>{traffic}</b>\n\n"
-        f"🔑 <b>Ключ для приложения Mister VPN:</b>\n<code>{escape(app_key)}</code>\n"
-        f"<i>💡 Скопируйте ключ и вставьте в приложении Mister VPN.</i>\n\n"
         f"🇷🇺 <b>Основная (доступна из РФ):</b>\n<code>{escape(ru_url)}</code>\n\n"
         f"🌍 <b>Основная (недоступна из РФ):</b>\n<code>{escape(sub_url)}</code>\n\n"
         f"⚡ <b>Резервная (network / прямая):</b>\n<code>{escape(backup_url)}</code>"
     )
-    if user.is_admin:
-        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
-        text += (
-            f"\n\n👑 <b>Подключение в 1 клик (Только для админов):</b>\n"
-            f"<code>{escape(admin_deep_link)}</code>"
-        )
     rows = [[("📱 Устройства", f"profile:devices:{token}", "primary")]]
     if sub.is_trial:
         text += f"\n\n{pe('gift')} <b>Это пробная подписка. Ее нельзя продлить.</b>"
@@ -214,19 +203,8 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
     markup = inline_keyboard(rows)
     # Insert link action rows
     link_buttons = [
-        [make_copy_button("🔑 Скопировать ключ в приложение", app_key)]
+        [make_url_button("🇷🇺 Открыть (РФ)", ru_url), make_copy_button("📋 Скопировать (РФ)", ru_url)],
     ]
-    if user.is_admin:
-        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
-        redirect_url = f"{settings.subscription_base_url.rstrip('/')}/connect/admin?url={quote(ru_url, safe='')}"
-        link_buttons.append([
-            make_url_button("🚀 Подключить в 1 клик", redirect_url),
-            make_copy_button("👑 Скопировать 1-клик ключ", admin_deep_link),
-        ])
-    link_buttons.append([
-        make_url_button("🇷🇺 Открыть (РФ)", ru_url),
-        make_copy_button("📋 Скопировать (РФ)", ru_url),
-    ])
     if sub_url != ru_url:
         link_buttons.append([make_url_button("🌍 Открыть (вне РФ)", sub_url), make_copy_button("📋 Скопировать (вне РФ)", sub_url)])
     if backup_url not in (ru_url, sub_url):

@@ -5,8 +5,6 @@ via app.utils.formatting.escape.
 """
 from __future__ import annotations
 
-from urllib.parse import quote
-
 from app.db.models.plan import VPNPlanSnapshot
 from app.db.models.subscription import VPNSubscription
 from app.bot.premium_emoji import pe
@@ -189,36 +187,13 @@ def subscription_links_text(
     ru_url: str,
     sub_url: str,
     backup_url: str | None = None,
-    *,
-    is_admin: bool = False,
-    subscription_uuid: str | None = None,
 ) -> str:
     lines = [
-        f"{pe('link')} <b>Данные для подключения</b>\n",
+        f"{pe('link')} <b>Ваши ссылки для подключения</b>\n",
+        f"🇷🇺 <b>Основная (доступна из РФ):</b>\n<code>{escape(ru_url)}</code>\n",
+        f"🌍 <b>Основная (недоступна из РФ):</b>\n<code>{escape(sub_url)}</code>\n",
     ]
-    if subscription_uuid:
-        from app.services.subscriptions import subscription_app_key
-
-        key = subscription_app_key(subscription_uuid, is_admin=is_admin)
-        lines.extend([
-            "🔑 <b>Ключ для приложения Mister VPN:</b>",
-            f"<code>{escape(key)}</code>",
-            "<i>💡 Скопируйте ключ и вставьте в приложении Mister VPN.</i>\n",
-        ])
-
-    lines.extend([
-        f"🇷🇺 <b>Основная ссылка (доступна из РФ):</b>\n<code>{escape(ru_url)}</code>\n",
-        f"🌍 <b>Вне РФ:</b>\n<code>{escape(sub_url)}</code>\n",
-    ])
     if backup_url and backup_url not in (ru_url, sub_url):
         lines.append(f"⚡ <b>Резервная (network / прямая):</b>\n<code>{escape(backup_url)}</code>\n")
-
-    if is_admin:
-        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
-        lines.append(
-            f"👑 <b>Подключение в 1 клик (Только для админов):</b>\n"
-            f"<code>{escape(admin_deep_link)}</code>\n"
-        )
-
-    lines.append("<i>Нажмите на любой блок выше, чтобы скопировать.</i>")
+    lines.append("<i>Нажмите на ссылку выше, чтобы скопировать её в буфер обмена.</i>")
     return "\n".join(lines)

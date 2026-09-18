@@ -87,8 +87,6 @@ async def open_my_vpn(callback: CallbackQuery, session: AsyncSession, user: User
 
 @router.callback_query(F.data == "myvpn:link")
 async def get_link(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
-    from urllib.parse import quote
-
     _, sub = await _load_sub(session, user)
     if sub is None:
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
@@ -96,28 +94,10 @@ async def get_link(callback: CallbackQuery, session: AsyncSession, user: User) -
     ru_url = ru_subscription_url(sub.subscription_uuid)
     sub_url = sub_subscription_url(sub.subscription_uuid)
     backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
-    redirect_url = (
-        f"{settings.subscription_base_url.rstrip('/')}/connect/admin?url={quote(ru_url, safe='')}"
-        if user.is_admin
-        else None
-    )
     await replace_with_text_screen(
         callback,
-        texts.subscription_links_text(
-            ru_url,
-            sub_url,
-            backup_url,
-            is_admin=user.is_admin,
-            subscription_uuid=sub.subscription_uuid,
-        ),
-        reply_markup=subscription_link_keyboard(
-            ru_url,
-            backup_url,
-            sub_url,
-            is_admin=user.is_admin,
-            redirect_url=redirect_url,
-            subscription_uuid=sub.subscription_uuid,
-        ),
+        texts.subscription_links_text(ru_url, sub_url, backup_url),
+        reply_markup=subscription_link_keyboard(ru_url, backup_url, sub_url),
     )
     await callback.answer()
 

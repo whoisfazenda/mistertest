@@ -1,8 +1,6 @@
 """Menu and screen keyboards."""
 from __future__ import annotations
 
-from urllib.parse import quote
-
 from aiogram.types import InlineKeyboardMarkup
 
 from app.bot.keyboards.factory import (
@@ -112,33 +110,13 @@ def subscription_link_keyboard(
     ru_url: str,
     backup_url: str | None = None,
     sub_url: str | None = None,
-    *,
-    is_admin: bool = False,
-    redirect_url: str | None = None,
-    subscription_uuid: str | None = None,
 ) -> InlineKeyboardMarkup:
-    rows: list[list] = []
-
-    if subscription_uuid:
-        from app.services.subscriptions import subscription_app_key
-
-        app_key = subscription_app_key(subscription_uuid, is_admin=is_admin)
-        rows.append([
-            make_copy_button("🔑 Скопировать ключ в приложение", app_key),
-        ])
-
-    if is_admin:
-        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
-        admin_row = []
-        if redirect_url:
-            admin_row.append(make_url_button("🚀 Подключить в 1 клик", redirect_url))
-        admin_row.append(make_copy_button("👑 Скопировать 1-клик ключ", admin_deep_link))
-        rows.append(admin_row)
-
-    rows.append([
-        make_url_button("🇷🇺 Открыть (РФ)", ru_url),
-        make_copy_button("📋 Скопировать (РФ)", ru_url),
-    ])
+    rows: list[list] = [
+        [
+            make_url_button("🇷🇺 Открыть (РФ)", ru_url),
+            make_copy_button("📋 Скопировать (РФ)", ru_url),
+        ],
+    ]
     if sub_url and sub_url != ru_url:
         rows.append(
             [

@@ -48,7 +48,6 @@ RESERVED_ROOT_PATHS = {
     "sub",
     "subscription",
     "share",
-    "connect",
 }
 
 _PASSTHROUGH_HEADERS = (
@@ -250,85 +249,6 @@ async def proxy_subscription(request: Request, subscription_uuid: str) -> Respon
         pass
 
     raise HTTPException(status_code=502, detail="Не удалось загрузить конфигурацию подписки. Попробуйте позже.")
-
-
-@router.get("/connect/admin")
-@router.get("/sub/connect/admin")
-async def admin_one_click_redirect(url: str = "") -> HTMLResponse:
-    """Redirect mobile browser to Mister VPN Android app with 1-click admin connect."""
-    if not url:
-        raise HTTPException(status_code=400, detail="Missing url parameter")
-    escaped_url = html.escape(url)
-    app_link = f"mistervpn://admin?url={escaped_url}"
-    html_page = f"""<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mister VPN · Подключение в 1 клик</title>
-  <script>
-    window.location.href = "{app_link}";
-    setTimeout(function() {{
-      var fallback = document.getElementById("fallback");
-      if (fallback) fallback.style.display = "block";
-    }}, 1500);
-  </script>
-  <style>
-    body {{
-      margin: 0;
-      padding: 40px 20px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0b0f19;
-      color: #ffffff;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 80vh;
-    }}
-    .card {{
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      padding: 32px 24px;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    }}
-    .btn {{
-      display: inline-block;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 15px;
-      padding: 14px 28px;
-      border-radius: 14px;
-      text-decoration: none;
-      margin-top: 20px;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-    }}
-    .hint {{
-      color: #94a3b8;
-      font-size: 13px;
-      margin-top: 14px;
-      line-height: 1.4;
-    }}
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div style="font-size: 44px; margin-bottom: 12px;">👑</div>
-    <h2 style="margin: 0 0 8px 0; font-size: 20px;">Mister VPN (Admin)</h2>
-    <p style="color: #cbd5e1; font-size: 14px; margin: 0 0 16px 0;">Запуск приложения и подключение в 1 клик...</p>
-    <div id="fallback" style="display: none;">
-      <a class="btn" href="{app_link}">Открыть Mister VPN</a>
-      <div class="hint">Если приложение не открылось автоматически, нажмите кнопку выше или убедитесь, что приложение Mister VPN установлено на устройстве.</div>
-    </div>
-  </div>
-</body>
-</html>"""
-    return HTMLResponse(content=html_page)
 
 
 @router.get("/share/{token}")

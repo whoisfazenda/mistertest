@@ -459,37 +459,17 @@ async def _provision_and_report(callback, order_service: OrderService, order, us
         from app.bot.keyboards.menus import subscription_link_keyboard
 
         if sub is not None and order.order_type == OrderType.NEW_SUBSCRIPTION:
-            from urllib.parse import quote
-
             ru_url = ru_subscription_url(sub.subscription_uuid)
             sub_url = sub_subscription_url(sub.subscription_uuid)
             backup_url = upstream_subscription_url(sub.subscription_uuid, sub.subscription_url)
-            redirect_url = (
-                f"{settings.subscription_base_url.rstrip('/')}/connect/admin?url={quote(ru_url, safe='')}"
-                if user.is_admin
-                else None
-            )
             text = (
                 f"{pe('sparkles')} <b>Подписка оформлена!</b>\n\n"
-                + texts.subscription_links_text(
-                    ru_url,
-                    sub_url,
-                    backup_url,
-                    is_admin=user.is_admin,
-                    subscription_uuid=sub.subscription_uuid,
-                )
+                + texts.subscription_links_text(ru_url, sub_url, backup_url)
             )
             await replace_with_text_screen(
                 callback,
                 text,
-                reply_markup=subscription_link_keyboard(
-                    ru_url,
-                    backup_url,
-                    sub_url=sub_url,
-                    is_admin=user.is_admin,
-                    redirect_url=redirect_url,
-                    subscription_uuid=sub.subscription_uuid,
-                ),
+                reply_markup=subscription_link_keyboard(ru_url, backup_url, sub_url=sub_url),
             )
         else:
             from app.bot.keyboards.menus import main_menu
