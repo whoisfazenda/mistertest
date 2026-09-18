@@ -23,6 +23,7 @@ from app.bot.screens import (
     replace_with_text_screen,
 )
 from app.bot.states import PromoStates
+from app.core.config import settings
 from app.core.enums import OrderStatus, OrderType
 from app.db.models.user import User
 from app.repositories.orders import OrderRepository
@@ -180,6 +181,12 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
         f"🌍 <b>Основная (недоступна из РФ):</b>\n<code>{escape(sub_url)}</code>\n\n"
         f"⚡ <b>Резервная (network / прямая):</b>\n<code>{escape(backup_url)}</code>"
     )
+    if user.is_admin:
+        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
+        text += (
+            f"\n\n👑 <b>Подключение в 1 клик (Только для админов):</b>\n"
+            f"<code>{escape(admin_deep_link)}</code>"
+        )
     rows = [[("📱 Устройства", f"profile:devices:{token}", "primary")]]
     if sub.is_trial:
         text += f"\n\n{pe('gift')} <b>Это пробная подписка. Ее нельзя продлить.</b>"
@@ -202,9 +209,18 @@ async def profile_subscription_card(callback: CallbackQuery, session: AsyncSessi
     )
     markup = inline_keyboard(rows)
     # Insert link action rows
-    link_buttons = [
-        [make_url_button("🇷🇺 Открыть (РФ)", ru_url), make_copy_button("📋 Скопировать (РФ)", ru_url)],
-    ]
+    link_buttons = []
+    if user.is_admin:
+        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
+        redirect_url = f"{settings.subscription_base_url.rstrip('/')}/connect/admin?url={quote(ru_url, safe='')}"
+        link_buttons.append([
+            make_url_button("🚀 Подключить в 1 клик", redirect_url),
+            make_copy_button("👑 Скопировать 1-клик ключ", admin_deep_link),
+        ])
+    link_buttons.append([
+        make_url_button("🇷🇺 Открыть (РФ)", ru_url),
+        make_copy_button("📋 Скопировать (РФ)", ru_url),
+    ])
     if sub_url != ru_url:
         link_buttons.append([make_url_button("🌍 Открыть (вне РФ)", sub_url), make_copy_button("📋 Скопировать (вне РФ)", sub_url)])
     if backup_url not in (ru_url, sub_url):
