@@ -5,6 +5,8 @@ via app.utils.formatting.escape.
 """
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from app.db.models.plan import VPNPlanSnapshot
 from app.db.models.subscription import VPNSubscription
 from app.bot.premium_emoji import pe
@@ -187,6 +189,8 @@ def subscription_links_text(
     ru_url: str,
     sub_url: str,
     backup_url: str | None = None,
+    *,
+    is_admin: bool = False,
 ) -> str:
     lines = [
         f"{pe('link')} <b>Ваши ссылки для подключения</b>\n",
@@ -195,5 +199,13 @@ def subscription_links_text(
     ]
     if backup_url and backup_url not in (ru_url, sub_url):
         lines.append(f"⚡ <b>Резервная (network / прямая):</b>\n<code>{escape(backup_url)}</code>\n")
+
+    if is_admin:
+        admin_deep_link = f"mistervpn://admin?url={quote(ru_url, safe='')}"
+        lines.append(
+            f"👑 <b>Подключение в 1 клик (Только для админов):</b>\n"
+            f"<code>{escape(admin_deep_link)}</code>\n"
+        )
+
     lines.append("<i>Нажмите на ссылку выше, чтобы скопировать её в буфер обмена.</i>")
     return "\n".join(lines)
